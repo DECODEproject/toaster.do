@@ -6,8 +6,7 @@ Module for backend talk with Jenkins executed by the web/CGI
 from argparse import ArgumentParser
 from subprocess import run
 
-from config import jarpath, jobpath
-from jenkins_creds import (jenkins_host, jenkins_user, jenkins_pass)
+from config import (jarargs, jobpath)
 
 
 def html_escape(string):
@@ -53,23 +52,20 @@ def add_job(jobname):
     for i in replacements:
         sdk_job = sdk_job.replace('{{{%s}}}' % i[0], i[1])
 
-    creds = '%s:%s' % (jenkins_user, jenkins_pass)
-    clijob = run(['java', '-jar', jarpath, '-s', jenkins_host, '-auth', creds,
-                  'create-job', jobname.replace('@', 'AT')],
-                 input=sdk_job.encode())
+    jarargs.append('create-job')
+    jarargs.append(jobname.replace('@', 'AT'))
 
-    return clijob
+    return run(jarargs, input=sdk_job.encode())
 
 
 def del_job(jobname):
     """
     Function for deleting a Jenkins job.
     """
-    creds = '%s:%s' % (jenkins_user, jenkins_pass)
-    clijob = run(['java', '-jar', jarpath, '-s', jenkins_host, '-auth', creds,
-                  'delete-job', jobname.replace('@', 'AT')])
+    jarargs.append('delete-job')
+    jarargs.append(jobname.replace('@', 'AT'))
 
-    return clijob
+    return run(jarargs)
 
 
 def main():
@@ -87,7 +83,6 @@ def main():
     # - parazyd@dyne.org-arm_armhf_raspi2-2198361991
 
     args = parser.parse_args()
-
 
     if args.add:
         if args.dryrun:

@@ -18,8 +18,7 @@ important credentials which allow the backend to work with Jenkins' API.
 The `jenkins_creds.py` file should look like the following:
 ```
 jenkins_host = 'https://sdk.dyne.org:4443'
-jenkins_user = 'toaster'
-jenkins_pass = 'thetoasterpassword'
+jenkins_cred = 'toaster:thetoasterpassword'
 ```
 
 These files will be read and imported by `sync_jobs.py` when ran.
