@@ -41,10 +41,18 @@ def add_job(jobname):
     for i in replacements:
         sdk_job = sdk_job.replace('{{{%s}}}' % i[0], i[1])
 
-    jarargs.append('create-job')
-    jarargs.append(jobname.replace('@', 'AT'))
+    addargs = jarargs.copy()
+    addargs.append('create-job')
+    addargs.append(jobname.replace('@', 'AT'))
 
-    return run(jarargs, input=sdk_job.encode())
+    run(addargs, input=sdk_job.encode())
+
+    viewargs = jarargs.copy()
+    viewargs.append('add-job-to-view')
+    viewargs.append('web-sdk-builds')
+    viewargs.append(jobname.replace('@', 'AT'))
+
+    return run(viewargs)
 
 
 def del_job(jobname):
