@@ -68,6 +68,16 @@ def del_job(jobname):
     return run(jarargs)
 
 
+def run_job(jobname):
+    """
+    Function for running a Jenkins job.
+    """
+    jarargs.append('build')
+    jarargs.append(jobname.replace('@', 'AT'))
+
+    return run(jarargs)
+
+
 def main():
     """
     Main routine.
@@ -76,6 +86,7 @@ def main():
     parser.add_argument('-a', '--add', action='store_true')
     parser.add_argument('-d', '--delete', action='store_true')
     parser.add_argument('-n', '--dryrun', action='store_true')
+    parser.add_argument('-r', '--run', action='store_true')
     parser.add_argument('jobname')
     # NOTE: jobname should be email-arch-date, and a predefined directory
     # somewhere on the filesystem. e.g.:
@@ -96,6 +107,12 @@ def main():
             return
         print('Removing job:', args.jobname)
         del_job(args.jobname)
+    elif args.run:
+        if args.dryrun:
+            print('Would build:', args.jobname)
+            return
+        print('Building job:', args.jobname)
+        run_job(args.jobname)
 
 
 if __name__ == '__main__':

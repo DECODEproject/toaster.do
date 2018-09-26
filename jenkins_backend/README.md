@@ -28,7 +28,7 @@ Usage
 -----
 
 ```
-usage: sync_jobs.py [-h] [-a] [-d] [-n] jobname
+usage: sync_jobs.py [-h] [-a] [-d] [-n] [-r] jobname
 
 positional arguments:
   jobname
@@ -38,6 +38,7 @@ optional arguments:
   -a, --add
   -d, --delete
   -n, --dryrun
+  -r, --run
 ```
 
 The `jobname` argument should be in a specific format. It should contain
@@ -64,5 +65,5 @@ would look something like the following:
 sync_jobs.py -a parazyd@dyne.org-vm_amd64-1537977964
 ```
 
-In case of removing an existing job, all of the above applies the same
-way. You just have to use `-d` instead of `-a`.
+In case of removing or building an existing job, all of the above applies the
+same way. You just have to use `-d` or `-r` instead of `-a`, respectively.
