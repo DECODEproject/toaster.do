@@ -4,9 +4,9 @@ Module for backend talk with Jenkins executed by the web/CGI
 """
 
 from argparse import ArgumentParser
-from jenkins import Jenkins
+from subprocess import run
 
-from config import jobpath
+from config import jarpath, jobpath
 from jenkins_creds import (jenkins_host, jenkins_user, jenkins_pass)
 
 
@@ -22,7 +22,7 @@ def html_escape(string):
     return string
 
 
-def add_job(japi, jobname):
+def add_job(jobname):
     """
     Function for adding a job to Jenkins.
     """
@@ -53,14 +53,23 @@ def add_job(japi, jobname):
     for i in replacements:
         sdk_job = sdk_job.replace('{{{%s}}}' % i[0], i[1])
 
-    return japi.create_job(jobname, sdk_job)
+    creds = '%s:%s' % (jenkins_user, jenkins_pass)
+    clijob = run(['java', '-jar', jarpath, '-s', jenkins_host, '-auth', creds,
+                  'create-job', jobname.replace('@', 'AT')],
+                 input=sdk_job.encode())
+
+    return clijob
 
 
-def del_job(japi, jobname):
+def del_job(jobname):
     """
     Function for deleting a Jenkins job.
     """
-    return japi.delete_job(jobname)
+    creds = '%s:%s' % (jenkins_user, jenkins_pass)
+    clijob = run(['java', '-jar', jarpath, '-s', jenkins_host, '-auth', creds,
+                  'delete-job', jobname.replace('@', 'AT')])
+
+    return clijob
 
 
 def main():
@@ -79,20 +88,19 @@ def main():
 
     args = parser.parse_args()
 
-    japi = Jenkins(jenkins_host, username=jenkins_user, password=jenkins_pass)
 
     if args.add:
         if args.dryrun:
             print('Would add:', args.jobname)
             return
         print('Adding job:', args.jobname)
-        add_job(japi, args.jobname)
+        add_job(args.jobname)
     elif args.delete:
         if args.dryrun:
             print('Would remove:', args.jobname)
             return
         print('Removing job:', args.jobname)
-        del_job(japi, args.jobname)
+        del_job(args.jobname)
 
 
 if __name__ == '__main__':
