@@ -5,20 +5,9 @@ Module for backend talk with Jenkins executed by the web/CGI
 
 from argparse import ArgumentParser
 from subprocess import run
+import html
 
 from config import (jarargs, jobpath)
-
-
-def html_escape(string):
-    """
-    Function for escaping certain symbols to XML-compatible sequences.
-    """
-    html_codes = [("'", '&apos;'), ('"', '&quot;'), ('&', '&amp;'),
-                  ('<', '&lt;'), ('>', '&gt;')]
-    for i in html_codes:
-        string = string.replace(i[0], i[1])
-
-    return string
 
 
 def add_job(jobname):
@@ -40,7 +29,7 @@ def add_job(jobname):
         zshcmd = 'load devuan %s' % (blendfile)
 
     command = "zsh -f -c 'source sdk && %s && build_image_dist'" % zshcmd
-    command = html_escape(command)
+    command = html.escape(command)
 
     replacements = [('DESC', desc),
                     ('SDK', sdk),
