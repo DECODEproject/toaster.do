@@ -1,0 +1,16 @@
+webserver:
+  anti-forgery: false
+  ssl-redirect: false
+
+admin:
+  email: jaromil@dyne.org
+
+just-auth:
+  email-server: "mail.dyne.org"
+  email-user: "xxxxxxxxxxxxxxxx"
+  email-pass: "xxxxxxxxxxxxxxxx"
+  email-address: "xxxxxxxxxxxxxxxx"
+  email-admin: "xxxxxxxxxxxxxxxx"
+  mongo-url: mongodb://localhost:27017/toaster
+  mongo-user: toaster
+  mongo-pass: toaster
