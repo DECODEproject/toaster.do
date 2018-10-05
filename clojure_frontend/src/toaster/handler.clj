@@ -38,7 +38,9 @@
      [toaster.session :as s]
      [toaster.config :as conf]
      [toaster.webpage :as web]
-     [toaster.ring :as ring])
+     [toaster.ring :as ring]
+     [toaster.views :as views]
+     [toaster.jobs :as job])
     (:import java.io.File)
     (:gen-class))
 
@@ -49,9 +51,18 @@
   (GET "/" request (web/render "Hello World!"));; web/readme))
 
   ;; NEW ROUTES HERE
+  (GET "/dockerfile" request 
+       (web/render views/dockerfile-upload-form))
+       ;; (->> views/dockerfile-get
+       ;;      (s/check request)))
 
+  (POST "/dockerfile" request
+        (views/dockerfile-upload-post request nil nil))
 
-
+  (GET "/list" request
+       (web/render [:div {:class "container-fluid"}
+                    [:h1 "List all created jobs"]
+                    (job/listall config)]))
 
   ;; JUST-AUTH ROUTES
   (GET "/login" request

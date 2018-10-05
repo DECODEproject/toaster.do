@@ -23,6 +23,7 @@
                  [prismatic/schema "1.1.9"]
                  ;; filesystem utilities
                  [me.raynes/fs "1.4.6"]
+                 [me.raynes/conch "0.8.0"]
                  ;; time from joda-time
                  [clj-time "0.14.4"]]
   :aliases {"test" "midje"}
