@@ -91,9 +91,9 @@ def list_jobs(account):
     parsedlist = []
     for i in joblist.split():
         if i.startswith(account.replace('@', 'AT')):
-                parsedlist.append(i)
+            parsedlist.append(i)
 
-    print('\n'.join(parsedlist))
+    print('\n'.join(parsedlist).replace('AT', '@', 1))
 
 
 def main():
