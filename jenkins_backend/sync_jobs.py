@@ -76,15 +76,26 @@ def run_job(jobname):
     return run(jarargs)
 
 
+def list_jobs():
+    """
+    Function for listing Jenkins jobs.
+    """
+    jarargs.append('list-jobs')
+    jarargs.append('web-sdk-builds')
+
+    return run(jarargs)
+
+
 def main():
     """
     Main routine.
     """
     parser = ArgumentParser()
+    parser.add_argument('-n', '--dryrun', action='store_true')
     parser.add_argument('-a', '--add', action='store_true')
     parser.add_argument('-d', '--delete', action='store_true')
-    parser.add_argument('-n', '--dryrun', action='store_true')
     parser.add_argument('-r', '--run', action='store_true')
+    parser.add_argument('-l', '--list', action='store_true')
     parser.add_argument('jobname')
     # NOTE: jobname should be email-arch-date, and a predefined directory
     # somewhere on the filesystem. e.g.:
@@ -111,6 +122,8 @@ def main():
             return
         print('Building job:', args.jobname)
         run_job(args.jobname)
+    elif args.list:
+        list_jobs()
 
 
 if __name__ == '__main__':
