@@ -1,0 +1,5 @@
+#!/bin/sh
+
+target="$1"
+if [ "$target" = "" ]; then target=develop; fi
+docker run -p 3000:3000 -it dyne/toaster.do:$target $*

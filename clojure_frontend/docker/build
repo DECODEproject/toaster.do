@@ -1,0 +1,11 @@
+#!/bin/sh
+
+target="$1"
+if [ "$target" = "" ]; then target=develop; fi
+
+if test -d src/toaster; then
+	docker build -f docker/Dockerfile -t dyne/toaster.do:$target .
+else
+	echo "Launch from base source directiory. Usage:"
+	echo "./docker/build"
+fi
