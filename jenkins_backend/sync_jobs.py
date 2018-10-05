@@ -96,6 +96,27 @@ def list_jobs(account):
     print('\n'.join(parsedlist).replace('AT', '@', 1))
 
 
+def status_job(jobname):
+    """
+    Function for querying status of a certain job.
+    """
+    jarargs.append('console')
+    jarargs.append(jobname)
+    jarargs.append('-n')
+    jarargs.append('1')
+    console = run(jarargs, stdout=PIPE)
+    console = console.stdout.decode()
+
+    if 'SUCCESS' in console:
+        print('Last build succeeded')
+    elif 'FAILURE' in console:
+        print('Last build failed')
+    elif 'no build' in console:
+        print('No last build')
+    else:
+        print('Build is in progress')
+
+
 def main():
     """
     Main routine.
@@ -106,6 +127,7 @@ def main():
     parser.add_argument('-d', '--delete', action='store_true')
     parser.add_argument('-r', '--run', action='store_true')
     parser.add_argument('-l', '--list', action='store_true')
+    parser.add_argument('-s', '--status', action='store_true')
     parser.add_argument('jobname')
     # NOTE: jobname should be email-arch-date, and a predefined directory
     # somewhere on the filesystem. e.g.:
@@ -134,6 +156,8 @@ def main():
         run_job(args.jobname)
     elif args.list:
         list_jobs(args.jobname)
+    elif args.status:
+        status_job(args.jobname)
 
 
 if __name__ == '__main__':
