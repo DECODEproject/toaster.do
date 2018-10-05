@@ -150,24 +150,25 @@
     (page/include-css "/static/css/fontawesome.min.css")
     (page/include-css "/static/css/toaster.css")]))
 
+(def navbar-brand
+  [:div {:class "navbar-header"}
+   [:button {:class "navbar-toggle" :type "button"
+             :data-toggle "collapse"
+             :data-target "#navbarResponsive"
+             :aria-controls "navbarResponsive"
+             :aria-expanded "false"
+             :aria-label "Toggle navigation"}
+    [:span {:class "sr-only"} "Toggle navigation"]
+    [:span {:class "icon-bar"}]
+    [:span {:class "icon-bar"}]
+    [:span {:class "icon-bar"}]]
+   [:a {:class "navbar-item " :href "/"}
+    [:img {:src "/static/img/whale_toast.jpg"}]]])
+
 (def navbar-guest
   [:nav
    {:class "navbar navbar-default navbar-fixed-top navbar-expand-md navbar-expand-lg"}
-    [:div {:class "navbar-header"}
-     [:button {:class "navbar-toggle" :type "button"
-               :data-toggle "collapse"
-               :data-target "#navbarResponsive"
-               :aria-controls "navbarResponsive"
-               :aria-expanded "false"
-               :aria-label "Toggle navigation"}
-      [:span {:class "sr-only"} "Toggle navigation"]
-      [:span {:class "icon-bar"}]
-      [:span {:class "icon-bar"}]
-      [:span {:class "icon-bar"}]]
-     [:a {:class "navbar-item " :href "/"}
-      [:img {:src "/static/img/whale_toast.jpg"}]
-      ]]
-
+   navbar-brand
     [:div {:class "collapse navbar-collapse" :id "navbarResponsive"}
      [:ul {:class "nav navbar-nav hidden-sm md-auto ml-auto"}
       ;; --
@@ -178,41 +179,30 @@
       ]]])
 
 (def navbar-account
-  [:nav {:class "navbar navbar-default navbar-fixed-top navbar-expand-lg"}
-
-    [:div {:class "navbar-header"}
-     [:button {:class "navbar-toggle" :type "button"
-               :data-toggle "collapse" :data-target "#navbarResponsive"
-               :aria-controls "navbarResponsive" :aria-expanded "false"
-               :aria-label "Toggle navigation"}
-      [:span {:class "sr-only"} "Toggle navigation"]
-      [:span {:class "icon-bar"}]
-      [:span {:class "icon-bar"}]
-      [:span {:class "icon-bar"}]]
-     [:a {:class "navbar-brand far fa-handshake" :href "/"} "toaster"]]
-
+  [:nav {:class "navbar navbar-default navbar-fixed-top navbar-expand-md navbar-expand-lg"}
+   navbar-brand
     [:div {:class "collapse navbar-collapse" :id "navbarResponsive"}
      [:ul {:class "nav navbar-nav hidden-sm ml-auto"}
       ;; --
       [:li {:class "divider" :role "separator"}]
       ;; LIST OF RELEVANT LINKS AFTER LOGIN
-      ;; [:li {:class "nav-item"}
-      ;;  [:a {:class "nav-link far fa-address-card"
-      ;;       :href "/persons/list"} " Persons"]]
+      [:li {:class "nav-item"}
+       [:a {:class "nav-link far fa-address-card"
+            :href "/list"} " List"]]
       ;; [:li {:class "nav-item"}
       ;;  [:a {:class "nav-link far fa-paper-plane"
       ;;       :href "/projects/list"} " Projects"]]
-      ;; [:li {:class "nav-item"}
-      ;;  [:a {:class "nav-link far fa-plus-square"
-      ;;       :href "/timesheets"} " Upload"]]
+      [:li {:class "nav-item"}
+       [:a {:class "nav-link far fa-plus-square"
+            :href "/upload"} " Add"]]
       ;; [:li {:class "nav-item"}
       ;;  [:a {:class "nav-link far fa-save"
       ;;       :href "/reload"} " Reload"]]
       ;; --
-      [:li {:role "separator" :class "divider"} ]
-      [:li {:class "nav-item"}
-       [:a {:class "nav-link far fa-file-code"
-            :href "/config"} " Configuration"]]
+      ;; [:li {:role "separator" :class "divider"} ]
+      ;; [:li {:class "nav-item"}
+      ;;  [:a {:class "nav-link far fa-file-code"
+      ;;       :href "/config"} " Configuration"]]
       ]]])
 
 (defn render-footer []

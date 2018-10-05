@@ -35,10 +35,12 @@
   :uberwar {:init toaster.ring/init
             :handler toaster.handler/app}
   :mail toaster.handler
+  :npm {:dependencies [[dockerlint "0.3.9"]]}
   :profiles { :dev {:dependencies [[javax.servlet/servlet-api "2.5"]
                                    [ring/ring-mock "0.3.2"]
                                    [midje "1.9.2"]]
-                    :plugins [[lein-midje "3.1.3"]]
+                    :plugins [[lein-midje "3.1.3"]
+                              [lein-npm "0.6.2"]]
                     :aot :all
                     :main toaster.handler}
              :uberjar {:aot  :all

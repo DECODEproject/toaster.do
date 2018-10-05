@@ -51,18 +51,18 @@
   (GET "/" request (web/render "Hello World!"));; web/readme))
 
   ;; NEW ROUTES HERE
-  (GET "/dockerfile" request 
-       (web/render views/dockerfile-upload-form))
-       ;; (->> views/dockerfile-get
-       ;;      (s/check request)))
+  (GET "/upload" request
+       (->> (fn [req conf acct]
+              (web/render acct views/dockerfile-upload-form))
+            (s/check request)))
 
   (POST "/dockerfile" request
-        (views/dockerfile-upload-post request nil nil))
+        (->> views/dockerfile-upload-post
+             (s/check request)))
 
   (GET "/list" request
-       (web/render [:div {:class "container-fluid"}
-                    [:h1 "List all created jobs"]
-                    (job/listall config)]))
+       (->> views/list-jobs
+            (s/check request)))
 
   ;; JUST-AUTH ROUTES
   (GET "/login" request
@@ -85,11 +85,12 @@
          (let [session {:session {:config config
                                   :auth logged}}]
            (conj session
-                 (web/render
-                  logged
-                  [:div
-                   [:h1 "Logged in: " username]
-                   (web/render-yaml session)])))
+                 (views/list-jobs request config logged)))
+                 ;; (web/render
+                 ;;  logged
+                 ;;  [:div
+                 ;;   [:h1 "Logged in: " username]
+                 ;;   views/welcome-menu])))
          (f/when-failed [e]
            (web/render-error-page
             (str "Login failed: " (f/message e))))))

@@ -1,6 +1,7 @@
 (ns toaster.views
   (:require
    [clojure.java.io :as io]
+   [clojure.string :as str]
    ;;   [clojure.data.json :as json :refer [read-str]]
    [toaster.webpage :as web]
    [toaster.session :as s]
@@ -11,6 +12,9 @@
    [toaster.config :as conf]
    [taoensso.timbre :as log :refer [debug]]
    [me.raynes.conch :as sh :refer [with-programs]]
+   [clj-time.core :as time]
+   [clj-time.coerce :as tc]
+   [clj-time.local :as tl]
    [hiccup.form :as hf]))
 
 (def dockerfile-upload-form
@@ -29,9 +33,15 @@ proceed to validation."]
               :id "field-submit" :type "submit"
               :name "submit" :value "submit"}]]]])
 
-(defn dockerfile-upload-post
-  [request config account]
+(def welcome-menu
+  [:div {:class "container-fluid"}
+   [:div {:class "row-fluid"}
+    [:div {:class "row"} [:a {:href "/list"} "List all your toaster jobs"]]
+    [:div {:class "row"} [:a {:href "/upload"} "Upload a new toaster job"]]]])
+     
+(defn dockerfile-upload-post [request config account]
   (web/render
+   account
    (let
        [tempfile (get-in request [:params :file :tempfile])
         filename (get-in request [:params :file :filename])
@@ -50,15 +60,26 @@ proceed to validation."]
             (log/spy :error
                      [:h1 (str "Uploaded file not found: " filename)]))
            ;; file is now in 'tmp' var
-           (with-programs [ssh scp]
-             ;; (require '[clj-time.core :as time]
-             ;;          '[clj-time.coerce :as tc])
-             ;; timestamp: (tc/to-long (time/now))
-             (let [jobname "test@dyne.org-vm_amd64-12345678" ;; TODO:
-                   jobdir  (str "/srv/toaster/" jobname)]
-               (log/spy (ssh "-i" "../id_ed25519" "jenkins@sdk.bridge" "mkdir" "-p" jobdir {:throw false}))
-               (log/spy (scp "-i" "../id_ed25519" path (str "jenkins@sdk.bridge:" jobdir) {:throw false}))
-               (log/spy (ssh "-i" "../id_ed25519" "jenkins@sdk.bridge" "sync_jobs.py" "-a" jobname {:verbose true :throw false}))))
-                                                   
-           ;; TODO: launch scripts
-           ))))))
+           [:div {:class "container-fluid"}
+            [:h1 "Job uploaded and added"]
+            [:p "Log messages:"]
+            (web/render-yaml (job/add path config account))]))))))
+
+(defn list-jobs [request config account]
+  (web/render
+   account
+   [:div {:class "container-fluid"}
+    [:h1 (str "List all toaster jobs for " (:name account))]
+    [:table {:class "sortable table"}
+     [:thead nil
+      [:tr nil [:th nil "Date"] [:th nil "Type"] [:th nil "Actions"]]]
+     [:tbody nil
+      (for [j (job/listall config account)]
+        (let [type (-> j (str/split #"-") second)
+              tstamp (-> j (str/split #"-") last)]
+          [:tr nil
+           [:td {:class "date"} (-> tstamp Long/valueOf tc/from-long tl/to-local-date-time)]
+           [:td {:class "job"} [:a {:href (str "https://sdk.dyne.org:4443/view/web-sdk-builds/job/" j)} type]]
+           [:td {:class "start-job"} (web/button "/start" "Start" (hf/hidden-field "job" j))
+            (web/button "/remove" "Remove" (hf/hidden-field "job" j))]]
+          ))]]]))
