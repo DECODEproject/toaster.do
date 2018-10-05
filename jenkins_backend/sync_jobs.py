@@ -5,9 +5,10 @@ Module for backend talk with Jenkins executed by the web/CGI
 
 from argparse import ArgumentParser
 from subprocess import run
+from os.path import join
 import html
 
-from config import (jarargs, jobpath)
+from config import (jarargs, jobpath, pypath)
 
 
 def add_job(jobname):
@@ -36,7 +37,7 @@ def add_job(jobname):
                     ('ARCH', arch),
                     ('COMMAND', command)]
 
-    sdk_job = open('toasterbuild.xml', encoding='utf-8').read()
+    sdk_job = open(join(pypath, 'toasterbuild.xml'), encoding='utf-8').read()
 
     for i in replacements:
         sdk_job = sdk_job.replace('{{{%s}}}' % i[0], i[1])

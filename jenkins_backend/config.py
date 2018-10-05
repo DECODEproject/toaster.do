@@ -2,6 +2,9 @@
 
 from jenkins_creds import (jenkins_host, jenkins_cred)
 
+# Path to our files
+pypath = '/var/lib/jenkins/toaster.do/jenkins_backend'
+
 # Path to jenkins-cli.jar
 jarpath = '/var/cache/jenkins/war/WEB-INF/jenkins-cli.jar'
 
