@@ -4,7 +4,7 @@ Module for backend talk with Jenkins executed by the web/CGI
 """
 
 from argparse import ArgumentParser
-from subprocess import run
+from subprocess import run, PIPE
 from os.path import join
 import html
 
@@ -76,14 +76,24 @@ def run_job(jobname):
     return run(jarargs)
 
 
-def list_jobs():
+def list_jobs(account):
     """
     Function for listing Jenkins jobs.
     """
     jarargs.append('list-jobs')
     jarargs.append('web-sdk-builds')
 
-    return run(jarargs)
+    if account == 'all':
+        return run(jarargs)
+
+    joblist = run(jarargs, stdout=PIPE)
+    joblist = joblist.stdout.decode()
+    parsedlist = []
+    for i in joblist.split():
+        if i.startswith(account.replace('@', 'AT')):
+                parsedlist.append(i)
+
+    print('\n'.join(parsedlist))
 
 
 def main():
@@ -123,7 +133,7 @@ def main():
         print('Building job:', args.jobname)
         run_job(args.jobname)
     elif args.list:
-        list_jobs()
+        list_jobs(args.jobname)
 
 
 if __name__ == '__main__':
