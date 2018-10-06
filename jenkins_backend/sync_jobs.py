@@ -93,7 +93,7 @@ def list_jobs(account):
         if i.startswith(account.replace('@', 'AT')):
             parsedlist.append(i)
 
-    print('\n'.join(parsedlist).replace('AT', '@', 1))
+    print('\n'.join(parsedlist)
 
 
 def status_job(jobname):
