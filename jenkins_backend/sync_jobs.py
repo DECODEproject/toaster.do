@@ -6,6 +6,7 @@ Module for backend talk with Jenkins executed by the web/CGI
 from argparse import ArgumentParser
 from subprocess import run, PIPE
 from os.path import join
+from shutil import rmtree
 import html
 
 from config import (jarargs, jobpath, pypath)
@@ -60,6 +61,8 @@ def del_job(jobname):
     """
     Function for deleting a Jenkins job.
     """
+    rmtree(join(jobpath, jobname), ignore_errors=True)
+
     jarargs.append('delete-job')
     jarargs.append(jobname.replace('@', 'AT'))
 
