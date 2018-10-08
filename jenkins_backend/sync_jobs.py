@@ -25,13 +25,13 @@ def add_job(jobname):
 
     if sdk == 'arm':
         board = info[1].split('_')[2]
-        zshcmd = 'load devuan %s %s' % (board, blendfile)
+        zshcmd = 'load devuan %s %s && build_image_dist' % (board, blendfile)
     elif sdk == 'live':
-        zshcmd = 'load devuan %s %s' % (arch, blendfile)
+        zshcmd = 'load devuan %s %s && build_iso_dist ' % (arch, blendfile)
     elif sdk == 'vm':
-        zshcmd = 'load devuan %s' % (blendfile)
+        zshcmd = 'load devuan %s && build_vagrant_dist' % (blendfile)
 
-    command = "zsh -f -c 'source sdk && %s && build_image_dist'" % zshcmd
+    command = "zsh -f -c 'source sdk && %s'" % zshcmd
     command = html.escape(command)
 
     replacements = [('DESC', desc),
