@@ -20,7 +20,8 @@ def add_job(jobname):
     desc = 'WebSDK build for: %s\nStarted: %s' % (info[0], info[2])
     sdk = info[1].split('_')[0]
     arch = info[1].split('_')[1]
-    blendfile = '%s/%s/Dockerfile' % (jobpath, jobname)
+    blenddir = join(jobpath, jobname)
+    blendfile = join(blenddir, 'Dockerfile')
 
     if sdk == 'arm':
         board = info[1].split('_')[2]
@@ -36,7 +37,8 @@ def add_job(jobname):
     replacements = [('DESC', desc),
                     ('SDK', sdk),
                     ('ARCH', arch),
-                    ('COMMAND', command)]
+                    ('COMMAND', command),
+                    ('BLENDDIR', blenddir)]
 
     sdk_job = open(join(pypath, 'toasterbuild.xml'), encoding='utf-8').read()
 
