@@ -2,8 +2,10 @@ webserver:
   anti-forgery: false
   ssl-redirect: false
 
-admin:
-  email: jaromil@dyne.org
+jenkins:
+  host: "bridge.toaster"
+  user: "jenkins"
+  key: "../id_ed25519"
 
 just-auth:
   email-server: "mail.dyne.org"

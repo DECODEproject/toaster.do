@@ -93,7 +93,7 @@
   ;;   (s/validate Config conf)
   ;;   (catch Exception ex
   ;;     (f/fail (log/spy :error ["Invalid configuration: " conf ex]))))
-  (get-in conf path))
+  (get-in conf (into [:toaster] path)))
 
 (defn load-config [name default]
   (log/info (str "Loading configuration: " name))

@@ -37,39 +37,41 @@
 (def db     (atom {}))
 (def accts  (atom {}))
 (def auth   (atom {}))
+(def jobs   (atom {}))
 
 (defn init []
-  (log/merge-config! {:level :debug
-                      ;; #{:trace :debug :info :warn :error :fatal :report}
-
-                      ;; Control log filtering by
-                      ;; namespaces/patterns. Useful for turning off
-                      ;; logging in noisy libraries, etc.:
-;;                      :ns-whitelist  ["agiladmin.*" "just-auth.*"]
-                      :ns-blacklist  ["org.eclipse.jetty.*"
-                                      "org.mongodb.driver.cluster"]})
-
+  (log/merge-config!
+   {:level :debug
+    ;; #{:trace :debug :info :warn :error :fatal :report}
+    
+    ;; Control log filtering by
+    ;; namespaces/patterns. Useful for turning off
+    ;; logging in noisy libraries, etc.:
+    ;; i.e: :ns-whitelist  ["agiladmin.*" "just-auth.*"]
+    :ns-blacklist  ["org.eclipse.jetty.*"
+                    "org.mongodb.driver.cluster"]})
+  ;; ------------------
   ;; load configuration
   (reset! config (conf/load-config
                   (or (System/getenv "toaster_conf") "toaster")
                   conf/default-settings))
 
-  (let [justauth-conf (get-in @config [:toaster :just-auth])]
+  ;; --------------------------------
+  ;; initialize authentication stores
+  (let [justauth-conf (conf/q @config [:just-auth])]
     ;; connect database (TODO: take parameters from configuration)
     (reset! db (get-mongo-db (:mongo-url justauth-conf)))
 
     ;; create authentication stores in db
     (f/attempt-all
-     [auth-conf   (get-in @config [:toaster :just-auth])
-      auth-stores (auth-db/create-auth-stores @db)]
+     [auth-stores (auth-db/create-auth-stores @db)]
 
      [(trans/init "lang/auth-en.yml" "lang/english.yaml")
       (reset! accts auth-stores)
-      (reset! auth (auth/email-based-authentication  
+      (reset! auth (auth/email-based-authentication
                     auth-stores
                     ;; TODO: replace with email taken from config
-                    (dissoc (:just-auth (:toaster (conf/load-config
-                                                    "toaster" conf/default-settings)))
+                    (dissoc (conf/q @config [:just-auth])
                             :mongo-url :mongo-user :mongo-pass)
                     {:criteria #{:email :ip-address} 
                      :type :block
@@ -80,6 +82,13 @@
      (f/when-failed [e]
        (log/error (str (trans/locale [:init :failure])
                        " - " (f/message e))))))
+
+  ;; ----------------------
+  ;; initialize jobs stores
+  (reset! jobs (create-mongo-store @db :job-store))
+
+  ;; ------------------------------
+  ;; log all results worth noticing
   (log/info (str (trans/locale [:init :success])))
   (log/debug @auth))
 
@@ -87,7 +96,7 @@
     (-> site-defaults
         (assoc-in [:cookies] true)
         (assoc-in [:security :anti-forgery]
-                  (get-in @config [:webserver :anti-forgery]))
+                  (conf/q @config [:webserver :anti-forgery]))
         (assoc-in [:security :ssl-redirect]
-                  (get-in @config [:webserver :ssl-redirect]))
+                  (conf/q @config [:webserver :ssl-redirect]))
         (assoc-in [:security :hsts] true)))
