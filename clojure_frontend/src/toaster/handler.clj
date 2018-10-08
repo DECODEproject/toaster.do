@@ -48,16 +48,19 @@
 (defroutes
   app-routes
 
-  (GET "/" request (web/render "Hello World!"))             ;; web/readme))
+  (GET "/" request (web/render "Hello there!"))             ;; web/readme))
 
   ;; NEW ROUTES HERE
   (GET "/upload" request
     (->> (fn [req conf acct]
-           (web/render acct views/dockerfile-upload-form))
+           (web/render acct [:div
+                             views/dockerfile-upload-form
+                             (views/list-jobs acct)]))
          (s/check request)))
 
   (POST "/dockerfile" request
-    (->> views/dockerfile-upload-post
+    (->> (fn [req conf acct]
+           (web/render acct (views/dockerfile-upload-post req conf acct)))
          (s/check request)))
 
   (GET "/edit" request
@@ -66,7 +69,30 @@
          (s/check request)))
 
   (GET "/list" request
-    (->> views/list-jobs
+    (->> (fn [req conf acct]
+           (web/render acct (views/list-jobs acct)))
+         (s/check request)))
+
+  (POST "/remove" request
+    (->> (fn [req conf acct]
+           (web/render acct (views/remove-job req conf acct)))
+         (s/check request)))
+
+  (POST "/start" request
+    (->> (fn [req conf acct]
+           (web/render acct (views/start-job req conf acct)))
+         (s/check request)))
+
+  (POST "/view" request
+    (->> (fn [req conf acct]
+           (web/render acct (views/view-job req conf acct)))
+         (s/check request)))
+
+  (GET "/error" request
+    (->> (fn [req conf acct]
+           (web/render acct [:div
+                              (web/render-error "Generic Error Page")
+                              (views/list-jobs acct)]))
          (s/check request)))
 
   ;; JUST-AUTH ROUTES
@@ -90,7 +116,7 @@
       (let [session {:session {:config config
                                :auth   logged}}]
         (conj session
-              (views/list-jobs request config logged)))
+              (web/render logged (views/list-jobs logged))))
       ;; (web/render
       ;;  logged
       ;;  [:div

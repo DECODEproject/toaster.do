@@ -46,26 +46,35 @@
                       r_mkdir (ssh "-i" (q config [:jenkins :key])
                                    (ssh-host config) "mkdir" "-p" jobdir)
                       r_scp (scp "-i" (q config [:jenkins :key])
-                                 path (str (ssh-host config) ":" jobdir))
-                      r_job (log/spy (sync_jobs config "-a" jobname))
-                      r_store (log/spy (db/store!
-                                         @jobs :jobid
-                                         (log/spy {:jobid     jobname
-                                                   :email     (:email account)
-                                                   :account   (dissoc account :password :activation-link)
-                                                   :lint      (if (.contains r_lint "is OK") true false)
-                                                   :timestamp tstamp
-                                                   :type      "vm_amd64"})))]
+                                 path (str (ssh-host config) ":" jobdir "/Dockerfile"))
+                      r_job (sync_jobs config "-a" jobname)
+                      r_store (db/store! @jobs :jobid
+                                         {:jobid     jobname
+                                          :email     (:email account)
+                                          :account   (dissoc account :password :activation-link)
+                                          :lint      (if (.contains r_lint "is OK") true false)
+                                          :timestamp tstamp
+                                          :type      "vm_amd64"
+                                          :dockerfile (slurp path)})]
                      {:lint r_lint
                       :job  r_job}
                      (f/when-failed [e]
-                                    (web/render-error-page
+                                    (web/render-error
                                       (str "Job add failure: " (f/message e))))))))
 
+(defn trash [jobid config]
+  (f/attempt-all [r_sync (sync_jobs config "-d" jobid)]
+                 jobid
+                 (f/when-failed [e]
+                                (web/render-error
+                                  (str "Job remove failure: " (f/message e))))))
 
-(defn listall [config account]
-  (sync_jobs config "-l" (:email account))
-  ;;(db/query @jobs {:email (:email account)})
-  )
+(defn start [jobid config]
+  (f/attempt-all [r_sync (sync_jobs config "-r" jobid)]
+                 jobid
+                 (f/when-failed [e]
+                                (web/render-error
+                                  (str "Job start failure: " (f/message e))))))
+
 
 

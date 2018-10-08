@@ -98,6 +98,14 @@
             [:div {:class "container-fluid"} body]
             (render-footer)])}))
 
+(defn render-success
+  "render a successful message without ending the page"
+  [succ]
+  [:div {:class "alert alert-success" :role "alert"}
+   [:span {:class "far fa-check-circle"
+           :aria-hidden "true" :style "padding: .5em"}]
+   [:span {:class "sr-only"} "Success:" ]
+   succ])
 
 (defn render-error
   "render an error message without ending the page"
