@@ -34,9 +34,10 @@
   <builders>
     <hudson.tasks.Shell>
       <command>
-scp -r sdk:{{{BLENDDIR}}} {{{BLENDDIR}}}
-git submodule update --init --recursive --checkout
-{{{COMMAND}}}
+scp -r sdk:{{{BLENDDIR}}} {{{BLENDDIR}}} || exit 1
+git submodule update --init --recursive --checkout || exit 1
+{{{COMMAND}}} || exit 1
+rm -rf {{{BLENDDIR}}}
       </command>
     </hudson.tasks.Shell>
   </builders>
