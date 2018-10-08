@@ -25,13 +25,17 @@
                  [me.raynes/fs "1.4.6"]
                  [me.raynes/conch "0.8.0"]
                  ;; time from joda-time
-                 [clj-time "0.14.4"]]
+                 [clj-time "0.14.4"]
+                 [clojure-humanize "0.2.2"]]
   :aliases {"test" "midje"}
   :source-paths ["src"]
   :resource-paths ["resources"]
   :plugins [[lein-ring "0.12.4"]]
   :ring    {:init toaster.ring/init
-            :handler toaster.handler/app}
+            :handler toaster.handler/app
+            :nrepl {:start? true
+                    :host "localhost"
+                    :port 40231}}
   :uberwar {:init toaster.ring/init
             :handler toaster.handler/app}
   :mail toaster.handler
