@@ -138,13 +138,26 @@
      "an installable " [:a {:href "https://devuan.org"} "Devuan GNU+Linux"]
      " image, choose any supported target architecture!"]
     [:div {:class "columns is-variable is-8"}
-     [:div {:class "column is-one-quarter is-narrow-touch"}
-      [:a {:href "https://www.dyne.org"}
+
+     [:div {:class "column is-one-quarter"}
+      [:a {:href "https://decodeproject.eu"}
        [:figure {:class "image"}
-        [:img {:src "/static/img/swbydyne.png"
-               :alt   "Software by Dyne.org"
-               :title "Software by Dyne.org"}]]]]
-     [:div {:class "column auto"}]
+        [:img {:src "/static/img/decode_logo.png"
+               :alt "DECODE project"}]]]]
+
+      [:div {:class "column is-one-quarter"}
+       [:a {:href "https://www.dyne.org"}
+        [:figure {:class "image"}
+         [:img {:src "/static/img/swbydyne.png"
+                :alt   "Software by Dyne.org"
+                :title "Software by Dyne.org"}]]]]
+
+    [:div {:class "column is-one-quarter"}
+     [:a {:href "https://devuan.org"}
+      [:figure {:class "image"}
+       [:img {:src "/static/img/devuan_logo.png"
+              :alt "powered by Devuan GNU+Linux"}]]]]
+
      [:div {:class "column is-one-quarter"}
       [:figure {:class "image"}
        [:img {:src "/static/img/AGPLv3.png" ;; :style "margin-top: 2.5em"
@@ -227,8 +240,8 @@
      body
      ]]])
 
-(def login-form  
-  (hero-login-box 
+(def login-form
+  (hero-login-box
    [:div {:class "column is-4 is-offset-4"}
     [:h3 {:class "title has-text-grey"} "toaster.do"]
     [:h4 {:class "subtitle has-text-grey"}
