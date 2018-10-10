@@ -1,9 +1,14 @@
 body {
-	font-family: "arial";
-	font-size: 22px;
+	/* font-family: "arial"; */
+	/* font-size: 22px; */
 	font-smooth: always;
 	-webkit-font-smoothing: antialiased;
-	padding-top: 65px;
+	/* padding-top: 65px; */
+}
+
+/* horizontal margins on wide screens */
+@media (min-width: 768px) {
+	.container { width: 36em; }
 }
 
 code {
@@ -31,94 +36,52 @@ code {
 
 h1, h2, h3, h4 { }
 
+/* p { */
+/* 	letter-spacing: 0.01rem; */
+/* 	font-style: normal; */
+/* 	line-height: 1.5; */
+/* } */
+
+/* img { */
+/* 	width: auto; */
+/* 	height: auto; */
+/* 	max-width: 100%; */
+/* 	vertical-align: middle; */
+/* 	overflow: hidden; */
+/* } */
+
+html,body {
+	font-family: 'Open Sans', serif;
+	font-size: 14px;
+	font-weight: 300;
+}
+.hero.is-success {
+	background: #F2F6FA;
+}
+.hero .nav, .hero.is-success .nav {
+	-webkit-box-shadow: none;
+	box-shadow: none;
+}
+.box {
+	margin-top: 5rem;
+}
+.avatar {
+	margin-top: -70px;
+	padding-bottom: 20px;
+}
+.avatar img {
+	padding: 5px;
+	background: #fff;
+	border-radius: 50%;
+	-webkit-box-shadow: 0 2px 3px rgba(10,10,10,.1), 0 0 0 1px rgba(10,10,10,.1);
+	box-shadow: 0 2px 3px rgba(10,10,10,.1), 0 0 0 1px rgba(10,10,10,.1);
+}
+input {
+	font-weight: 300;
+}
 p {
-	letter-spacing: 0.01rem;
-	font-style: normal;
-	line-height: 1.5;
+	font-weight: 700;
 }
-
-img {
-	width: auto;
-	height: auto;
-	max-width: 100%;
-	vertical-align: middle;
-	overflow: hidden;
-}
-
-/* Sortable tables */
-table.sortable thead {
-    background-color:#eee;
-    color:#666666;
-    font-weight: bold;
-    cursor: default;
-}
-
-table.sortable td {
-	font-size: .8em;
-	font-family: "arial"
-    vertical-align: middle;
-}
-
-.input-form {
-	clear: right;
-}
-
-li {
-    /* padding: .5em; */
-}
-
-.secrets {
-	padding: 1em;
-}
-
-.password {
-	font-size: 1.5;
-	padding: 1em;
-	/* display: inline-block; */
-}
-
-
-.navbar-text {
-	margin-top: 22px;
-}
-
-.password .content {
-	font-size: 1em;
-}
-
-.slices {
-
-}
-
-.slices ul {
-	list-style: none;
-}
-
-.slices .content {
-	font-size: .5em;
-}
-
-.qrcode {
-    float: left;
-    margin-left: -19px;
-}
-
-
-.card {
-    border: solid 3px #888;
-    border-radius: 5px;
-    padding: 1.5em 2.2em .8em 2.2em;
-}
-
-.card .gravatar {
-    margin-top: 19px;
-}
-
-.balance {
-    font-size: 2em;
-    margin: 1em 0;
-}
-
-.wallet-details {
-    display: inline-block;
+p.subtitle {
+	padding-top: 1rem;
 }

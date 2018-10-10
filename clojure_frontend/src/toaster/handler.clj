@@ -18,178 +18,182 @@
 
 (ns toaster.handler
   (:require
-    [clojure.string :as str]
-    [clojure.java.io :as io]
-    [clojure.data.json :as json]
-    [compojure.core :refer :all]
-    [compojure.handler :refer :all]
-    [compojure.route :as route]
-    [compojure.response :as response]
+   [clojure.string :as str]
+   [clojure.java.io :as io]
+   [clojure.data.json :as json]
+   [compojure.core :refer :all]
+   [compojure.handler :refer :all]
+   [compojure.route :as route]
+   [compojure.response :as response]
 
-    [ring.adapter.jetty :refer :all]
-    [ring.middleware.session :refer :all]
-    [ring.middleware.accept :refer [wrap-accept]]
-    [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
+   [ring.adapter.jetty :refer :all]
+   [ring.middleware.session :refer :all]
+   [ring.middleware.accept :refer [wrap-accept]]
+   [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
 
-    [failjure.core :as f]
-    [taoensso.timbre :as log]
-    [just-auth.core :as auth]
+   [failjure.core :as f]
+   [taoensso.timbre :as log]
+   [just-auth.core :as auth]
 
-    [toaster.session :as s]
-    [toaster.config :as conf]
-    [toaster.webpage :as web]
-    [toaster.ring :as ring]
-    [toaster.views :as views]
-    [toaster.jobs :as job])
+   [toaster.session :as s]
+   [toaster.config :as conf]
+   [toaster.bulma :as web]
+   [toaster.ring :as ring]
+   [toaster.views :as views]
+   [toaster.jobs :as job])
   (:gen-class))
 
 (defonce config (conf/load-config "toaster" conf/default-settings))
 
+
+(defn- login-page [request form]
+  (f/attempt-all
+   [acct (s/check-account request)]
+   (web/render acct
+               [:div {:class "container"}
+                [:h1 {:class "title"}
+                 (str "Already logged in with account: "
+                      (:email acct))]
+                [:h2 {:class "subtitle"}
+                 [:a {:href "/logout"} "Logout"]]])
+   (f/when-failed [e]
+     (web/render form))))
+
 (defroutes
   app-routes
 
-  (GET "/" request (web/render "Hello there!"))             ;; web/readme))
+  (GET "/" request (login-page request web/login-form))
 
   ;; NEW ROUTES HERE
   (GET "/upload" request
-    (->> (fn [req conf acct]
-           (web/render acct [:div
-                             views/dockerfile-upload-form
-                             (views/list-jobs acct)]))
-         (s/check request)))
+       (->> (fn [req conf acct]
+              (web/render acct [:div
+                                views/dockerfile-upload-form
+                                (views/list-jobs acct)]))
+            (s/check request)))
 
   (POST "/dockerfile" request
-    (->> (fn [req conf acct]
-           (web/render acct (views/dockerfile-upload-post req conf acct)))
-         (s/check request)))
-
-  (GET "/edit" request
-    (->> (fn [req conf acct]
-           (web/render acct views/dockerfile-edit-form))
-         (s/check request)))
+        (->> (fn [req conf acct]
+               (web/render acct (views/dockerfile-upload-post req conf acct)))
+             (s/check request)))
 
   (GET "/list" request
-    (->> (fn [req conf acct]
-           (web/render acct (views/list-jobs acct)))
-         (s/check request)))
+       (->> (fn [req conf acct]
+              (web/render acct (views/list-jobs acct)))
+            (s/check request)))
 
   (POST "/remove" request
-    (->> (fn [req conf acct]
-           (web/render acct (views/remove-job req conf acct)))
-         (s/check request)))
+        (->> (fn [req conf acct]
+               (web/render acct (views/remove-job req conf acct)))
+             (s/check request)))
 
   (POST "/start" request
-    (->> (fn [req conf acct]
-           (web/render acct (views/start-job req conf acct)))
-         (s/check request)))
+        (->> (fn [req conf acct]
+               (web/render acct (views/start-job req conf acct)))
+             (s/check request)))
 
   (POST "/view" request
-    (->> (fn [req conf acct]
-           (web/render acct (views/view-job req conf acct)))
-         (s/check request)))
+        (->> (fn [req conf acct]
+               (web/render acct (views/view-job req conf acct)))
+             (s/check request)))
 
   (GET "/error" request
-    (->> (fn [req conf acct]
-           (web/render acct [:div
-                              (web/render-error "Generic Error Page")
-                              (views/list-jobs acct)]))
-         (s/check request)))
+       (->> (fn [req conf acct]
+              (web/render acct [:div
+                                (web/render-error "Generic Error Page")
+                                (views/list-jobs acct)]))
+            (s/check request)))
 
   ;; JUST-AUTH ROUTES
-  (GET "/login" request
-    (f/attempt-all
-      [acct (s/check-account request)]
-      (web/render acct
-                  [:div
-                   [:h1 (str "Already logged in with account: "
-                             (:email acct))]
-                   [:h2 [:a {:href "/logout"} "Logout"]]])
-      (f/when-failed [e]
-                     (web/render web/login-form))))
+  (GET "/login" request (login-page request web/login-form))
+  
   (POST "/login" request
-    (f/attempt-all
-      [username (s/param request :username)
-       password (s/param request :password)
-       logged (auth/sign-in
-                @ring/auth username password {})]
-      ;; TODO: pass :ip-address in last argument map
-      (let [session {:session {:config config
-                               :auth   logged}}]
-        (conj session
-              (web/render logged (views/list-jobs logged))))
-      ;; (web/render
-      ;;  logged
-      ;;  [:div
-      ;;   [:h1 "Logged in: " username]
-      ;;   views/welcome-menu])))
-      (f/when-failed [e]
-                     (web/render-error-page
-                       (str "Login failed: " (f/message e))))))
-  (GET "/session" request
-    (-> (:session request) web/render-yaml web/render))
+        (f/attempt-all
+         [username (s/param request :username)
+          password (s/param request :password)
+          logged (auth/sign-in
+                  @ring/auth username password {})]
+         ;; TODO: pass :ip-address in last argument map
+         (let [session {:session {:config config
+                                  :auth   logged}}]
+           (conj session
+                 (web/render logged (views/list-jobs logged))))
+         ;; (web/render
+         ;;  logged
+         ;;  [:div
+         ;;   [:h1 "Logged in: " username]
+         ;;   views/welcome-menu])))
+         (f/when-failed [e]
+           (web/render (web/render-error
+            (str "Login failed: " (f/message e)))))))
+
   (GET "/logout" request
-    (conj {:session {:config config}}
-          (web/render [:h1 "Logged out."])))
-  (GET "/signup" request
-    (web/render web/signup-form))
+       (conj {:session {:config config}}
+             (web/render [:div {:class "container"}
+                          [:h1 {:class "title"} "Logged out."]])))
+
+  (GET "/signup" request (login-page request web/signup-form))
   (POST "/signup" request
-    (f/attempt-all
-      [name (s/param request :name)
-       email (s/param request :email)
-       password (s/param request :password)
-       repeat-password (s/param request :repeat-password)
-       activation {:activation-uri
-                   (get-in request [:headers "host"])}]
-      (web/render
-        (if (= password repeat-password)
-          (f/try*
-            (f/if-let-ok?
-              [signup (auth/sign-up @ring/auth
-                                    name
-                                    email
-                                    password
-                                    activation
-                                    [])]
-              [:div
-               [:h2 (str "Account created: "
-                         name " &lt;" email "&gt;")]
-               [:h3 "Account pending activation."]]
-              (web/render-error
+        (f/attempt-all
+         [name (s/param request :name)
+          email (s/param request :email)
+          password (s/param request :password)
+          repeat-password (s/param request :repeat-password)
+          activation {:activation-uri
+                      (get-in request [:headers "host"])}]
+         (web/render
+          (if (= password repeat-password)
+            (f/try*
+             (f/if-let-ok?
+                 [signup (auth/sign-up @ring/auth
+                                       name
+                                       email
+                                       password
+                                       activation
+                                       [])]
+               [:div
+                [:h2 (str "Account created: "
+                          name " &lt;" email "&gt;")]
+                [:h3 "Account pending activation."]]
+               (web/render-error
                 (str "Failure creating account: "
                      (f/message signup)))))
-          (web/render-error
-            "Repeat password didnt match")))
-      (f/when-failed [e]
-                     (web/render-error-page
-                       (str "Sign-up failure: " (f/message e))))))
+            (web/render-error
+             "Repeat password didnt match")))
+         (f/when-failed [e]
+           (web/render
+            (web/render-error 
+             (str "Sign-up failure: " (f/message e)))))))
+
   (GET "/activate/:email/:activation-id"
        [email activation-id :as request]
-    (let [activation-uri
-          (str "http://"
-               (get-in request [:headers "host"])
-               "/activate/" email "/" activation-id)]
-      (web/render
-        [:div
-         (f/if-let-failed?
-           [act (auth/activate-account
-                  @ring/auth email
-                  {:activation-link activation-uri})]
-           (web/render-error
-             [:div
-              [:h1 "Failure activating account"]
-              [:h2 (f/message act)]
-              [:p (str "Email: " email " activation-id: " activation-id)]])
-           [:h1 (str "Account activated - " email)])])))
+       (let [activation-uri
+             (str "http://"
+                  (get-in request [:headers "host"])
+                  "/activate/" email "/" activation-id)]
+         (web/render
+          [:div
+           (f/if-let-failed?
+               [act (auth/activate-account
+                     @ring/auth email
+                     {:activation-link activation-uri})]
+             (web/render-error
+              [:div
+               [:h1 "Failure activating account"]
+               [:h2 (f/message act)]
+               [:p (str "Email: " email " activation-id: " activation-id)]])
+             [:h1 (str "Account activated - " email)])])))
   ;; -- end of JUST-AUTH
 
   (POST "/" request
-    ;; generic endpoint for canceled operations
-    (web/render (s/check-account request)
-                [:div {:class (str "alert alert-danger") :role "alert"}
-                 (s/param request :message)]))
+        ;; generic endpoint for canceled operations
+        (web/render (s/check-account request)
+                    [:div {:class (str "alert alert-danger") :role "alert"}
+                     (s/param request :message)]))
 
   (route/resources "/")
-  (route/not-found (web/render-error-page "Page Not Found"))
+  (route/not-found (web/render (web/render-error "Page Not Found")))
+
   )                                                         ;; end of routes
 
 (def app
@@ -206,7 +210,7 @@
 (defn -main []
   (println "Starting ring server")
   (ring/init ring/app-defaults)
-  ;(run-jetty app {:port 6060
-  ;                :host "localhost"
-  ;                :join? true})
+                                        ;(run-jetty app {:port 6060
+                                        ;                :host "localhost"
+                                        ;                :join? true})
   )

@@ -301,7 +301,7 @@
 ;; (defonce readme
 ;;   (slurp (io/resource "public/static/README.html")))
 
-(defonce login-form
+(def login-form
   [:div
    [:h1 "Login for your  account"
     [:form {:action "/login"
@@ -318,7 +318,7 @@
               :class "btn btn-primary btn-lg btn-block"
               :style "margin-top: 1em"}]]]])
 
-(defonce signup-form
+(def signup-form
   [:div
    [:h1 "Sign Up for a toaster account"
     [:form {:action "/signup"
