@@ -20,16 +20,36 @@ def add_job(jobname):
     desc = 'WebSDK build for: %s\nStarted: %s' % (info[0], info[2])
     sdk = info[1].split('_')[0]
     arch = info[1].split('_')[1]
+    codename = info[1].split('_')[2]
     blenddir = join(jobpath, jobname)
     blendfile = join(blenddir, 'Dockerfile')
 
+    if codename == 'ascii':
+        relvars = 'release=ascii && version=2.0.0'
+    elif codename == 'beowulf':
+        relvars = 'release=beowulf && version=3.0.0'
+    else:
+        # Default to Ascii
+        relvars = 'release=ascii && version=2.0.0'
+
     if sdk == 'arm':
-        board = info[1].split('_')[2]
-        zshcmd = 'load devuan %s %s && build_image_dist' % (board, blendfile)
+        board = info[1].split('_')[3]
+        zshcmd = '\
+            load devuan %s %s && \
+            %s && \
+            build_image_dist' % (board, blendfile, relvars)
+
     elif sdk == 'live':
-        zshcmd = 'load devuan %s %s && build_iso_dist ' % (arch, blendfile)
+        zshcmd = '\
+            load devuan %s %s && \
+            %s && \
+            build_iso_dist' % (arch, blendfile, relvars)
+
     elif sdk == 'vm':
-        zshcmd = 'load devuan %s && build_vagrant_dist' % (blendfile)
+        zshcmd = '\
+            load devuan %s && \
+            %s && \
+            build_vagrant_dist' % (blendfile, relvars)
 
     command = "zsh -f -c 'source sdk && %s'" % zshcmd
     command = html.escape(command)
@@ -37,6 +57,7 @@ def add_job(jobname):
     replacements = [('DESC', desc),
                     ('SDK', sdk),
                     ('ARCH', arch),
+                    ('CODENAME', codename),
                     ('COMMAND', command),
                     ('BLENDDIR', blenddir)]
 

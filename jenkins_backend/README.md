@@ -43,26 +43,26 @@ optional arguments:
 
 The `jobname` argument should be in a specific format. It should contain
 the requester's email, which sdk was chosen, the requested architecture,
-and a timestamp.
+codename, and a timestamp.
 
 In case of vm-sdk or live-sdk, these would look like:
 
 ```
-parazyd@dyne.org-vm_amd64-1537977964
-parazyd@dyne.org-live_amd64-1537977964
+parazyd@dyne.org-vm_amd64_ascii-1537977964
+parazyd@dyne.org-live_amd64_beowulf-1537977964
 ```
 
 In case of arm-sdk, we also need to know the board we're building for:
 
 ```
-parazyd@dyne.org-arm_armhf_sunxi-1537977964
+parazyd@dyne.org-arm_armhf_ascii_sunxi-1537977964
 ```
 
 All of this combined, the required command to add a new job to Jenkins
 would look something like the following:
 
 ```
-sync_jobs.py -a parazyd@dyne.org-vm_amd64-1537977964
+sync_jobs.py -a parazyd@dyne.org-vm_amd64_ascii-1537977964
 ```
 
 In case of removing or building an existing job, all of the above applies the

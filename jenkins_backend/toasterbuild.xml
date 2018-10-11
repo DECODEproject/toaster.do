@@ -36,6 +36,12 @@
       <command>
 scp -r sdk:{{{BLENDDIR}}} {{{BLENDDIR}}} || exit 1
 git submodule update --init --recursive --checkout || exit 1
+
+mkdir -p tmp
+cd tmp
+wget https://sdk.dyne.org:4443/job/devuan-{{{CODENAME}}}-{{{ARCH}}}-stage3/lastSuccessfulBuild/artifact/tmp/bootstrap-devuan-{{{ARCH}}}-stage3.tgz
+cd -
+
 {{{COMMAND}}} || exit 1
 rm -rf {{{BLENDDIR}}}
       </command>
