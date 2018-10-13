@@ -19,6 +19,7 @@
 (ns toaster.bulma
   (:require [clojure.java.io :as io]
             [clojure.data.csv :as csv]
+            [taoensso.timbre :as log]
             [yaml.core :as yaml]
             [hiccup.page :as page]
             [hiccup.form :as hf]))
@@ -30,9 +31,6 @@
 (declare render-footer)
 (declare render-yaml)
 (declare render-edn)
-(declare render-error)
-(declare render-error-page)
-(declare render-static)
 
 
 ;; TODO: navbars for bulma
@@ -73,39 +71,28 @@
               "text/html; charset=utf-8"}
     :body (page/html5
            (render-head)
-           [:body ;; {:class "static"}
+           [:body
             ;; navbar-guest
             body
             (render-footer)])})
   ([account body]
    {:headers {"Content-Type"
               "text/html; charset=utf-8"}
-    :body (page/html5
-           (render-head)
-           [:body ;; (if (empty? account)
-                  ;;   navbar-guest
-                  ;;   navbar-account)
-            body
-            (render-footer)])}))
+    :body  (page/html5
+            (render-head)
+            [:body ;; (if (empty? account)
+             ;;   navbar-guest
+             ;;   navbar-account)
+             body
+             (render-footer)])}))
 
-(defn render-success
-  "render a successful message without ending the page"
-  [succ]
-  [:div {:class "notification is-primary"} succ])
+(defn notify
+  "render a notification message without ending the page"
+  ([msg] (notify msg ""))
+  ([msg class]
+   [:div {:class (str "notification " class " has-text-centered")} msg]))
 
-(defn render-error
-  "render an error message without ending the page"
-  [err]
-  [:div {:class "notification is-danger"} err])
-
-(defn render-error-page
-  ([]    (render-error-page {} "Unknown"))
-  ([err] (render-error-page {} err))
-  ([session error]
-   (render
-    [:div {:class "container"}
-     (render-error error)])))
-
+(defn render-error [err] (->> "is-error" (notify (log/spy :error err)) render))
 
 (defn render-head
   ([] (render-head
@@ -136,44 +123,38 @@
    [:div {:class "content has-text-centered"}
     [:p {:class "has-text-grey"} "toaster.do transforms your Docker prototype into "
      "an installable " [:a {:href "https://devuan.org"} "Devuan GNU+Linux"]
-     " image, choose any supported target architecture!"]
+     " image, choose any supported target architecture."]
     [:div {:class "columns is-variable is-8"}
 
-     [:div {:class "column is-one-quarter"}
+     [:div {:class "column is-one-fifth"}
+      [:figure {:class "image"}
+       [:img {:src "/static/img/ec_logo.png"
+              :alt "European project DECODE (H2020 nr. 732546)"}]]]
+
+     [:div {:class "column is-one-fifth"}
       [:a {:href "https://decodeproject.eu"}
        [:figure {:class "image"}
         [:img {:src "/static/img/decode_logo.png"
                :alt "DECODE project"}]]]]
 
-      [:div {:class "column is-one-quarter"}
+      [:div {:class "column is-one-fifth"}
        [:a {:href "https://www.dyne.org"}
         [:figure {:class "image"}
          [:img {:src "/static/img/swbydyne.png"
                 :alt   "Software by Dyne.org"
                 :title "Software by Dyne.org"}]]]]
 
-    [:div {:class "column is-one-quarter"}
+    [:div {:class "column is-one-fifth"}
      [:a {:href "https://devuan.org"}
       [:figure {:class "image"}
        [:img {:src "/static/img/devuan_logo.png"
               :alt "powered by Devuan GNU+Linux"}]]]]
 
-     [:div {:class "column is-one-quarter"}
+     [:div {:class "column is-one-fifth"}
       [:figure {:class "image"}
        [:img {:src "/static/img/AGPLv3.png" ;; :style "margin-top: 2.5em"
               :alt "Affero GPLv3 License"
               :title "Affero GPLv3 License"}]]]]]])
-
-(defn render-static [body]
-  (page/html5 (render-head)
-              [:body {:class "fxc static"}
-
-               ;; navbar-guest
-
-               [:div {:class "container"} body]
-
-               (render-footer)
-               ]))
 
 
 ;; highlight functions do no conversion, take the format they highlight
@@ -232,7 +213,7 @@
    [:input {:class "btn btn-success btn-lg pull-top"
             :type "submit" :value "submit"}]])
 
-(def brand-img "/static/img/whale_toast.jpg")
+(def brand-img "/static/img/cafudda.jpg")
 (defn- hero-login-box [body]
   [:section {:class "hero is-fullheight"}
    [:div {:class "hero-body"}

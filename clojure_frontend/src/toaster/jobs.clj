@@ -9,10 +9,26 @@
     [failjure.core :as f]
     [taoensso.timbre :as log :refer [debug]]
     [me.raynes.conch :as sh :refer [with-programs]]
-    [toaster.webpage :as web]
+    [toaster.bulma :as web]
     [toaster.config :refer :all]
     [toaster.ring :refer [jobs]]
     [hiccup.form :as hf]))
+
+;; list of arm targets to chose from
+;"beagleboneblack"
+;"chromeacer"
+;"chromeveyron"
+;"droid4"
+;"n900"
+;"odroidxu4"
+;"odroidxu"
+;"ouya"
+;"raspi1"
+;"raspi2"
+;"raspi3"
+;"rock64"
+;"sunxi"
+;"turbox-twister"
 
 (defn- ssh-host [config]
   (str (q config [:jenkins :user]) "@" (q config [:jenkins :host])))
@@ -59,8 +75,7 @@
                      {:lint r_lint
                       :job  r_job}
                      (f/when-failed [e]
-                                    (web/render-error
-                                      (str "Job add failure: " (f/message e))))))))
+                       (f/fail (str "Job add '" jobname "' failure: " (f/message e))))))))
 
 (defn trash [jobid config]
   (f/attempt-all [r_sync (sync_jobs config "-d" jobid)]

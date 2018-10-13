@@ -1,11 +1,13 @@
 webserver:
   anti-forgery: false
   ssl-redirect: false
+  mock-auth: false
 
 jenkins:
   host: "bridge.toaster"
   user: "jenkins"
   key: "../id_ed25519"
+  url: "https://sdk.dyne.org:4443"
 
 just-auth:
   email-server: "mail.dyne.org"

@@ -38,6 +38,7 @@
 (declare render-error)
 (declare render-error-page)
 (declare render-static)
+(declare render-error)
 
 (defn q [req]
   "wrapper to retrieve parameters"

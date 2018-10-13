@@ -6,7 +6,7 @@
    [failjure.core :as f]
    [just-auth.core :as auth]
    [toaster.ring :as ring]
-   [toaster.webpage :as web]))
+   [toaster.bulma :as web]))
 
 (defn param [request param]
   (let [value
@@ -29,7 +29,7 @@
     (if (contains? session :config)
       (:config session)
       (conf/load-config "toaster" conf/default-settings))
-    (f/fail "Session not found. ")))
+    (f/fail "Session not found.")))
 
 (defn check-account [request]
   ;; check if login is present in session
@@ -39,22 +39,27 @@
    user
    (f/when-failed [e]
      (->> e f/message
-          (str "Unauthorized access. ")
+          (str "Unauthorized access: ")
           f/fail))))
 
 (defn check-database []
   (if-let [db @ring/db]
     db
-    (f/fail "No connection to database. ")))
+    (f/fail "No connection to database.")))
 
-(defn check [request fun]
+(defn auth-wrap [request fun]
   (f/attempt-all
-   [db (check-database)
-    config (check-config request)
-    account (check-account request)]
-    (fun request config account)
-    (f/when-failed [e]
-      (web/render
-       [:div
-        (web/render-error (f/message e))
-        web/login-form]))))
+   [db      (check-database)
+    config  (check-config request)
+    account (if (conf/q config [:webserver :mock-auth])
+              {:email "mock@dyne.org"
+               :name "MockUser"
+               :activated true}
+              ;; else
+              (check-account request))]
+   (fun request config account)
+   (f/when-failed [e]
+     (web/render [:span
+                  (web/notify (f/message e) "is-error")
+                  web/login-form
+                  ]))))
