@@ -22,7 +22,7 @@
    [clojure.string :as str]
    [clojure.contrib.humanize :as humanize :refer [datetime]]
    ;;   [clojure.data.json :as json :refer [read-str]]
-   [toaster.bulma :as web]
+   [toaster.bulma :as web :refer [button notify render-yaml]]
    [toaster.session :as s]
    [toaster.ring :as ring]
    [toaster.jobs :as job]
@@ -38,7 +38,7 @@
    [hiccup.form :as hf]))
 
 (defn- box-list [account joblist]
-  [:div {:class "box column"}
+  [:div {:class "box"}
    [:h1 {:class "title"} (str "List all toaster jobs for " (:name account))]
    [:table {:class "table is-fullwidth is-hoverable"}
     [:thead nil
@@ -62,7 +62,7 @@
          ))]]])
 
 (defn- box-add []
-  [:div {:class "box column"}
+  [:div {:class "box"}
    [:h1 {:class "title"} "Upload a Dockerfile to toast"]
    [:p " Choose the file in your computer and click 'Submit' to
    proceed to validation."]
@@ -117,8 +117,10 @@
    [joblist (db/query @ring/jobs {:email (:email account)})]
    [:div {:class "container has-text-centered"}
 
-    [:div {:class "columns"}
-     (if (> 0 (count joblist)) (box-list account joblist))
+    [:span
+     ;(if (> 0 (count joblist))
+       (box-list account joblist)
+       ;)
      (box-add) ]]
    (f/when-failed [e]
      (web/notify
@@ -129,7 +131,7 @@
    [jobid (s/param request :jobid)
     jobfound (db/query @ring/jobs {:jobid jobid})
     r_rmjob (db/delete! @ring/jobs jobid)
-    r_sync (job/trash jobid config)]
+    r_sync (job/sync_jobs config "-d" jobid)]
    (web/notify (str "Job removed: "  jobid) "is-primary")
    (f/when-failed [e]
      (web/notify (str "Failure removing job: " (f/message e)) "is-error"))))
@@ -138,7 +140,7 @@
   (f/attempt-all
    [jobid (s/param request :jobid)
     jobfound (db/query @ring/jobs {:jobid jobid})
-    r_sync (job/start jobid config)]
+    r_sync (job/sync_jobs config "-r" jobid)]
    (web/notify (str "Job started: " jobid) "is-success")
    (f/when-failed [e]
      (web/notify (str "Failure starting job: " (f/message e)) "is-error"))))
@@ -148,7 +150,7 @@
    [jobid (s/param request :jobid)
     jobfound (db/fetch @ring/jobs jobid)
     dockerfile (-> jobfound :dockerfile)]
-   [:div {:class "container"}
+   [:div {:class "box"}
     [:h1 {:class "title"} (str "Viewing job: " jobid)]
     [:pre dockerfile]]
    (f/when-failed [e]

@@ -46,20 +46,3 @@
   (if-let [db @ring/db]
     db
     (f/fail "No connection to database.")))
-
-(defn auth-wrap [request fun]
-  (f/attempt-all
-   [db      (check-database)
-    config  (check-config request)
-    account (if (conf/q config [:webserver :mock-auth])
-              {:email "mock@dyne.org"
-               :name "MockUser"
-               :activated true}
-              ;; else
-              (check-account request))]
-   (fun request config account)
-   (f/when-failed [e]
-     (web/render [:span
-                  (web/notify (f/message e) "is-error")
-                  web/login-form
-                  ]))))

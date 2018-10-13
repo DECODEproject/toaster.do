@@ -71,20 +71,19 @@
               "text/html; charset=utf-8"}
     :body (page/html5
            (render-head)
-           [:body
-            ;; navbar-guest
-            body
-            (render-footer)])})
+           ;; navbar-guest
+           body
+           (render-footer))})
   ([account body]
    {:headers {"Content-Type"
               "text/html; charset=utf-8"}
     :body  (page/html5
             (render-head)
-            [:body ;; (if (empty? account)
-             ;;   navbar-guest
-             ;;   navbar-account)
-             body
-             (render-footer)])}))
+            ;; (if (empty? account)
+            ;;   navbar-guest
+            ;;   navbar-account)
+            body
+            (render-footer))}))
 
 (defn notify
   "render a notification message without ending the page"

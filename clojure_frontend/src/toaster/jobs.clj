@@ -34,7 +34,7 @@
   (str (q config [:jenkins :user]) "@" (q config [:jenkins :host])))
 
 
-(defn- sync_jobs [config arg1 arg2]
+(defn sync_jobs [config arg1 arg2]
   (with-programs
     [ssh]
     (try
@@ -42,7 +42,8 @@
                (ssh-host config) "sync_jobs.py"
                arg1 arg2)
           (str/split #"\n"))
-      (catch Exception e (f/fail (str "ERROR in sync_jobs.py - " (.getMessage e)))))))
+      (catch Exception e (f/fail (str "ERROR in sync_jobs.py "
+                                      arg1 " " arg2 " - " (.getMessage e)))))))
 
 (defn- dockerlint [path]
   (with-programs [node]
@@ -55,7 +56,7 @@
 (defn add [path config account]
   (with-programs [ssh scp node]
                  (let [tstamp (tc/to-long (time/now))
-                       jobname (str (:email account) "-vm_amd64-" tstamp)
+                       jobname (str (:email account) "-vm_amd64_ascii-" tstamp)
                        jobdir (str "/srv/toaster/" jobname)]
                    (f/attempt-all
                      [r_lint (dockerlint path)
@@ -70,26 +71,12 @@
                                           :account   (dissoc account :password :activation-link)
                                           :lint      (if (.contains r_lint "is OK") true false)
                                           :timestamp tstamp
-                                          :type      "vm_amd64"
+                                          :type      "vm_amd64_ascii"
                                           :dockerfile (slurp path)})]
                      {:lint r_lint
                       :job  r_job}
                      (f/when-failed [e]
                        (f/fail (str "Job add '" jobname "' failure: " (f/message e))))))))
-
-(defn trash [jobid config]
-  (f/attempt-all [r_sync (sync_jobs config "-d" jobid)]
-                 jobid
-                 (f/when-failed [e]
-                                (web/render-error
-                                  (str "Job remove failure: " (f/message e))))))
-
-(defn start [jobid config]
-  (f/attempt-all [r_sync (sync_jobs config "-r" jobid)]
-                 jobid
-                 (f/when-failed [e]
-                                (web/render-error
-                                  (str "Job start failure: " (f/message e))))))
 
 
 
