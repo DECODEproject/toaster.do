@@ -5,8 +5,19 @@
    [taoensso.timbre :as log]
    [failjure.core :as f]
    [just-auth.core :as auth]
-   [toaster.ring :as ring]
-   [toaster.bulma :as web]))
+   [hiccup.page :as page :refer [html5]]
+   [clostache.parser :refer [render-resource]]
+   [toaster.ring :as ring]))
+
+(defn resource
+  "renders a template, optionally passing it an hash-map of parameters."
+  ([template] (resource template {}))
+  ([template params] (render-resource template params)))
+
+(defonce login "templates/body_loginform.html")
+(defonce signup "templates/body_signupform.html")
+(defonce head "templates/html_head.html")
+(defonce footer "templates/body_footer.html")
 
 (defn param [request param]
   (let [value
@@ -46,3 +57,29 @@
   (if-let [db @ring/db]
     db
     (f/fail "No connection to database.")))
+
+
+(defn notify
+  "render a notification message without ending the page"
+  ([msg] (notify msg ""))
+  ([msg class]
+   ;; support also is-error (not included as notify class in bulma
+   (let [tclass (if (= class "is-error") "is-danger" class)]
+     (cond ;; log to console using timbre
+       (= tclass "is-danger")  (log/error msg)
+       (= tclass "is-warning") (log/warn msg)
+       (= tclass "is-success") (log/info msg)
+       (= tclass "is-primary") (log/debug msg))
+   [:div {:class (str "notification " tclass " has-text-centered")} msg])))
+
+(defn render
+  "render a full webpage using headers, navbar, body and footer"
+  ([body] (render nil body))
+  ([account body]
+   {:headers {"Content-Type"
+              "text/html; charset=utf-8"}
+    :body  (page/html5
+            (resource head)
+            (conj body (resource footer)))}))
+
+(defn render-error [err] (->> "is-danger" (notify (log/spy :error err)) render))

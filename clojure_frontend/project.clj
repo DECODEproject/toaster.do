@@ -26,7 +26,8 @@
                  [me.raynes/conch "0.8.0"]
                  ;; time from joda-time
                  [clj-time "0.14.4"]
-                 [clojure-humanize "0.2.2"]]
+                 [clojure-humanize "0.2.2"]
+                 [de.ubercode.clostache/clostache "1.4.0"]]
   :aliases {"test" "midje"}
   :source-paths ["src"]
   :resource-paths ["resources"]

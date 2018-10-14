@@ -37,16 +37,17 @@
 
    [toaster.session :as s]
    [toaster.config :as conf]
-   [toaster.bulma :as web :refer [render notify login-form]]
    [toaster.ring :as ring]
-   [toaster.views :as views]
-   [toaster.jobs :as job])
+   [toaster.views :as views])
   (:gen-class))
 
 (defonce config (conf/load-config "toaster" conf/default-settings))
 
-
-(defn auth-wrap [request fun]
+(defn auth-wrap
+  "Comfortably wrap routes using a function pointer to be called if an
+  account is correctly authenticated in the currently running session.
+  (fun) is passed 3 hash-maps args: request, config and account."
+  [request fun]
   (f/attempt-all
    [db      (s/check-database)
     config  (s/check-config request)
@@ -58,22 +59,9 @@
               (s/check-account request))]
    (fun request config account)
    (f/when-failed [e]
-     (web/render [:body
-                  (web/notify (f/message e) "is-error")
-                  web/login-form]))))
-
-(defn- login-page [request form]
-  (f/attempt-all
-   [acct (s/check-account request)]
-   (web/render acct
-               [:body
-                [:h1 {:class "title"}
-                 (str "Already logged in with account: "
-                      (:email acct))]
-                [:h2 {:class "subtitle"}
-                 [:a {:href "/logout"} "Logout"]]])
-   (f/when-failed [e]
-     (web/render [:body form]))))
+     (s/render [:body
+                (s/notify (f/message e) "is-error")
+                (s/resource s/login)]))))
 
 (defroutes
   app-routes
@@ -83,16 +71,16 @@
         [db (s/check-database)
          conf (s/check-config request)]
         (f/if-let-ok? [account (s/check-account request)]
-          (web/render [:body (views/dashboard account)])
+          (s/render [:body (views/dashboard account)])
           ;; else
-          (web/render [:body web/login-form]))
+          (s/render [:body (s/resource s/login)]))
         (f/when-failed[e]
-          (web/render [:body (web/notify (f/message e) "is-error")]))))
+          (s/render [:body (s/notify (f/message e) "is-error")]))))
 
   ;; NEW ROUTES HERE
   (POST "/dockerfile" request
         (->> (fn [req conf acct]
-               (web/render acct
+               (s/render acct
                            [:body
                             (views/dockerfile-upload-post req conf acct)
                             (views/dashboard acct)]))
@@ -100,34 +88,34 @@
 
   (POST "/remove" request
         (->> (fn [req conf acct]
-               (web/render acct [:body
+               (s/render acct [:body
                                  (views/remove-job req conf acct)
                                  (views/dashboard acct)]))
              (auth-wrap request)))
 
   (POST "/start" request
         (->> (fn [req conf acct]
-               (web/render acct [:body
+               (s/render acct [:body
                                  (views/start-job req conf acct)
                                  (views/dashboard acct)]))
              (auth-wrap request)))
 
   (POST "/view" request
         (->> (fn [req conf acct]
-               (web/render acct [:body
+               (s/render acct [:body
                                  (views/view-job req conf acct)
                                  (views/dashboard acct)]))
              (auth-wrap request)))
 
   (GET "/error" request
        (->> (fn [req conf acct]
-              (web/render acct [:body
-                                (web/notify "Generic Error Page" "is-error")
+              (s/render acct [:body
+                                (s/notify "Generic Error Page" "is-error")
                                 (views/dashboard acct)]))
             (auth-wrap request)))
 
   ;; JUST-AUTH ROUTES
-  (GET "/login" request (login-page request web/login-form))
+  (GET "/login" request (s/render (s/resource s/login)))
 
   (POST "/login" request
         (f/attempt-all
@@ -139,22 +127,22 @@
          (let [session {:session {:config config
                                   :auth   logged}}]
            (conj session
-                 (web/render logged [:body (views/dashboard logged)])))
-         ;; (web/render
+                 (s/render logged [:body (views/dashboard logged)])))
+         ;; (s/render
          ;;  logged
          ;;  [:div
          ;;   [:h1 "Logged in: " username]
          ;;   views/welcome-menu])))
          (f/when-failed [e]
-           (web/render [:body (web/notify
+           (s/render [:body (s/notify
                                (str "Login failed: " (f/message e)) "is-error")]))))
 
   (GET "/logout" request
        (conj {:session {:config config}}
-             (web/render [:body
+             (s/render [:body
                           [:h1 {:class "title"} "Logged out."]])))
 
-  (GET "/signup" request (login-page request web/signup-form))
+  (GET "/signup" request (s/render (s/resource s/signup)))
   (POST "/signup" request
         (f/attempt-all
          [name (s/param request :name)
@@ -163,7 +151,7 @@
           repeat-password (s/param request :repeat-password)
           activation {:activation-uri
                       (get-in request [:headers "host"])}]
-         (web/render
+         (s/render
           (if (= password repeat-password)
             (f/try*
              (f/if-let-ok?
@@ -178,15 +166,15 @@
                           name " &lt;" email "&gt;")]
                 [:h3 "Account pending activation."]]
                [:body
-                (web/notify
+                (s/notify
                  (str "Failure creating account: "
                       (f/message signup)) "is-error")
-                (login-page request web/signup-form)]))
-            [:body (web/notify
+                (s/resource s/signup)]))
+            [:body (s/notify
                     "Repeat password didnt match" "is-error")]))
          (f/when-failed [e]
-           (web/render
-            [:body (web/notify
+           (s/render
+            [:body (s/notify
                     (str "Sign-up failure: " (f/message e)) "is-error")]))))
 
   (GET "/activate/:email/:activation-id"
@@ -195,28 +183,28 @@
              (str "http://"
                   (get-in request [:headers "host"])
                   "/activate/" email "/" activation-id)]
-         (web/render
+         (s/render
           [:body
            (f/if-let-failed?
                [act (auth/activate-account
                      @ring/auth email
                      {:activation-link activation-uri})]
-             (web/notify
+             (s/notify
               [:span
                [:h1 {:class "title"}    "Failure activating account"]
                [:h2 {:class "subtitle"} (f/message act)]
                [:p (str "Email: " email " activation-id: " activation-id)]] "is-error")
-             (web/notify [:h1 {:class "title"} (str "Account activated - " email)] "is-success"))])))
+             (s/notify [:h1 {:class "title"} (str "Account activated - " email)] "is-success"))])))
   ;; -- end of JUST-AUTH
 
   (POST "/" request
         ;; generic endpoint for canceled operations
-        (web/render (s/check-account request)
-                    (web/notify
+        (s/render (s/check-account request)
+                    (s/notify
                      (s/param request :message) "is-error")))
 
   (route/resources "/")
-  (route/not-found (web/render [:body (web/notify "Page Not Found" "is-error")]))
+  (route/not-found (s/render [:body (s/notify "Page Not Found" "is-error")]))
 
   )                                                         ;; end of routes
 

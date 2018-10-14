@@ -22,7 +22,7 @@
    [clojure.string :as str]
    [clojure.contrib.humanize :as humanize :refer [datetime]]
    ;;   [clojure.data.json :as json :refer [read-str]]
-   [toaster.bulma :as web :refer [button notify render-yaml]]
+   [toaster.bulma :as web :refer [button render-yaml]]
    [toaster.session :as s]
    [toaster.ring :as ring]
    [toaster.jobs :as job]
@@ -35,8 +35,10 @@
    [clj-time.coerce :as tc]
    [clj-time.local :as tl]
    [clj-storage.core :as db]
-   [hiccup.form :as hf]))
+   [hiccup.form :as hf]
+   [clostache.parser :refer [render-resource]]))
 
+;; TODO: templated
 (defn- box-list [account joblist]
   [:div {:class "box"}
    [:h1 {:class "title"} (str "List all toaster jobs for " (:name account))]
@@ -61,34 +63,6 @@
             (web/button "/remove" "\uD83D\uDDD1" (hf/hidden-field "jobid" jobid))]]]
          ))]]])
 
-(defn- box-add []
-  [:div {:class "box"}
-   [:h1 {:class "title"} "Upload a Dockerfile to toast"]
-   [:p " Choose the file in your computer and click 'Submit' to
-   proceed to validation."]
-   [:form {:action  "dockerfile" :method "post"
-           :class   "form-shell"
-           :enctype "multipart/form-data"}
-    [:div {:class "file has-label is-fullwidth"}
-     [:label {:class "file-label"}
-      [:input {:class "file-input inputfile inputfile-2" :id "file" :type "file"}]
-      [:label {:for "file"} [:span {:id "filename"} "Choose a Dockerfile..."]]
-      [:span {:class "file-cta"}
-       [:span {:class "file-icon"}
-        [:i {:class "fa fa-upload"}]]
-       [:span {:class "file-label"} "Upload"]]]]
-    ;; [:fieldset {:class "fieldset-submit"}
-    [:div {:class "field"}
-     [:div {:class "control"}
-      [:input {:class "button is-block is-info is-large is-fullwidth"
-               :type "submit"
-               :name  "submit" :value "submit"}]]]]
-   [:script "var file = document.getElementById(\"file\");
-    file.onchange = function(){
-    if(file.files.length > 0) {
-      document.getElementById('filename').innerHTML = file.files[0].name;
-    } };"]])
-
 (defn dockerfile-upload-post [request config account]
   (let
       [tempfile (get-in request [:params :file :tempfile])
@@ -112,7 +86,7 @@
              [:h1 {:class "title"} "Job uploaded and added"]
              [:p "Log messages:"]
              (web/render-yaml newjob)]
-            (web/notify (f/message newjob) "is-error")))))))
+            (s/notify (f/message newjob) "is-error")))))))
 
 (defn dashboard
   ([account] (dashboard {} {} account))
@@ -125,9 +99,9 @@
      ;(if (> 0 (count joblist))
        (box-list account joblist)
        ;)
-     (box-add) ]]
+     (s/resource "templates/body_addjob.html") ]]
    (f/when-failed [e]
-     (web/notify
+     (s/notify
       (str "Job list failure: " (f/message e)) "is-error")))))
 
 (defn remove-job [request config account]
@@ -136,18 +110,18 @@
     jobfound (db/query @ring/jobs {:jobid jobid})
     r_rmjob (db/delete! @ring/jobs jobid)
     r_sync (job/sync_jobs config "-d" jobid)]
-   (web/notify (str "Job removed: "  jobid) "is-primary")
+   (s/notify (str "Job removed: "  jobid) "is-primary")
    (f/when-failed [e]
-     (web/notify (str "Failure removing job: " (f/message e)) "is-error"))))
+     (s/notify (str "Failure removing job: " (f/message e)) "is-error"))))
 
 (defn start-job [request config account]
   (f/attempt-all
    [jobid (s/param request :jobid)
     jobfound (db/query @ring/jobs {:jobid jobid})
     r_sync (job/sync_jobs config "-r" jobid)]
-   (web/notify (str "Job started: " jobid) "is-success")
+   (s/notify (str "Job started: " jobid) "is-success")
    (f/when-failed [e]
-     (web/notify (str "Failure starting job: " (f/message e)) "is-error"))))
+     (s/notify (str "Failure starting job: " (f/message e)) "is-error"))))
 
 (defn view-job [request config account]
   (f/attempt-all
@@ -160,4 +134,4 @@
     [:script "var editor = CodeMirror.fromTextArea(document.getElementById(\"code\"),
         { lineNumbers: true, mode: \"dockerfile\" });"]]
      (f/when-failed [e]
-       (web/notify (str "Failure viewing job: " (f/message e)) "is-error"))))
+       (s/notify (str "Failure viewing job: " (f/message e)) "is-error"))))
