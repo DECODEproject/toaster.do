@@ -60,29 +60,31 @@
             (web/button "/remove" "\uD83D\uDDD1" (hf/hidden-field "jobid" jobid))]]]
          ))]]])
 
-(defn dockerfile-upload-post [request config account]
+(defn dockerfile-upload [request config account]
   (f/attempt-all
    [tempfile (s/param request [:file :tempfile])
     filename (s/param request [:file :filename])
-    filesize (s/param request [:file :size])]
-   (cond
-     (> filesize 64000)
+    params (log/spy (:params request))]
+   (if (> (s/param request [:file :size]) 64000)
      ;; TODO: put filesize limit in config
-     (s/notify "File too big in upload (64KB limit)" "is-danger")
-     :else
+     (s/error "File too big in upload (64KB limit)")
+     ;; else
      (let [file (io/copy tempfile (io/file "/tmp" filename))
            path (str "/tmp/" filename)]
        (io/delete-file tempfile)
        (if (not (.exists (io/file path)))
-         (s/notify (str "Uploaded file not found: " filename) "is-danger")
+         (s/error (str "Uploaded file not found: " filename))
          ;; file is now in 'tmp' var
-         (f/if-let-ok? [newjob (job/add path config account)]
-           [:div {:class "container"}
-            [:h1 {:class "title"} "Job uploaded and added"]
-            [:p "Log messages:"]
-            (web/render-yaml newjob)]
-           ;; else when job/add is not-ok
-           (s/error "Error adding job" newjob)))))
+         (f/attempt-all
+          [newjob (job/add path config account)]
+          [:div {:class "container"}
+           [:h1 {:class "title"} "Job uploaded and added"]
+           [:p "Log messages:"]
+           (web/render-yaml newjob)]
+          ;; else when job/add is not-ok
+          (f/when-failed [e]
+            (s/error "Error adding job" e))
+          ))))
    (f/when-failed [e]
      (s/error "Upload file error" e))))
 
@@ -107,7 +109,7 @@
     jobfound (db/query @ring/jobs {:jobid jobid})
     r_rmjob (db/delete! @ring/jobs jobid)
     r_sync (job/sync_jobs config "-d" jobid)]
-   (s/notify (str "Job removed: "  jobid) "is-primary")
+   (s/notify (str "Job removed :: "  jobid) "is-primary")
    (f/when-failed [e]
      (s/error "Failure removing job" e))))
 

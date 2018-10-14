@@ -38,7 +38,8 @@
    [toaster.session :as s]
    [toaster.config :as conf]
    [toaster.ring :as ring]
-   [toaster.views :as views])
+   [toaster.views :as views]
+   [toaster.profiles :as profile])
   (:gen-class))
 
 (defonce config (conf/load-config "toaster" conf/default-settings))
@@ -81,9 +82,9 @@
   (POST "/dockerfile" request
         (->> (fn [req conf acct]
                (s/render acct
-                           [:body
-                            (views/dockerfile-upload-post req conf acct)
-                            (views/dashboard acct)]))
+                         [:body
+                          (views/dockerfile-upload req conf acct)
+                          (views/dashboard acct)]))
              (auth-wrap request)))
 
   (POST "/remove" request
@@ -115,7 +116,7 @@
             (auth-wrap request)))
 
   ;; JUST-AUTH ROUTES
-  (GET "/login" request (s/render (s/resource s/login)))
+  (GET "/login" request (s/render-template s/login))
 
   (POST "/login" request
         (f/attempt-all
@@ -142,7 +143,7 @@
              (s/render [:body
                           [:h1 {:class "title"} "Logged out."]])))
 
-  (GET "/signup" request (s/render (s/resource s/signup)))
+  (GET "/signup" request (s/render-template s/signup))
   (POST "/signup" request
         (f/attempt-all
          [name (s/param request :name)
@@ -194,7 +195,10 @@
                [:h1 {:class "title"}    "Failure activating account"]
                [:h2 {:class "subtitle"} (f/message act)]
                [:p (str "Email: " email " activation-id: " activation-id)]] "is-error")
-             (s/notify [:h1 {:class "title"} (str "Account activated - " email)] "is-success"))])))
+             [:span
+              (s/notify (str "Account activated: " email) "is-success")
+              (profile/create email)]
+             )])))
   ;; -- end of JUST-AUTH
 
   (POST "/" request

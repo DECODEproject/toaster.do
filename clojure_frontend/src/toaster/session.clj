@@ -14,17 +14,18 @@
   ([template] (resource template {}))
   ([template params] (render-resource template params)))
 
-(defonce login "templates/body_loginform.html")
+(defonce login  "templates/body_loginform.html")
 (defonce signup "templates/body_signupform.html")
-(defonce head "templates/html_head.html")
+(defonce head   "templates/html_head.html")
 (defonce footer "templates/body_footer.html")
 
 (defn param [request param]
-  (let [value
-        (get-in request
-                (conj [:params] param))]
+  (let [p (if (coll? param)
+            (into [:params] param)
+            (conj [:params] param))
+        value (get-in request p)]
     (if (nil? value)
-      (f/fail (str "Parameter not found: " param))
+      (f/fail (str "Parameter not found: " p))
       value)))
 
 ;; TODO: not working?
@@ -70,9 +71,12 @@
        (= tclass "is-warning") (log/warn msg)
        (= tclass "is-success") (log/info msg)
        (= tclass "is-primary") (log/debug msg))
-   [:div {:class (str "notification " tclass " has-text-centered")} msg])))
+     [:div {:class (str "notification " tclass " has-text-centered")} msg]
+     )))
 ;; shortcut
-(defn error [msg fail] (notify (str msg " :: " (f/message fail)) "is-danger"))
+(defn error
+  ([msg] (notify msg "is-danger"))
+  ([msg fail] (notify (str msg " :: " (f/message fail)) "is-danger")))
 
 (defn render
   "render a full webpage using headers, navbar, body and footer"
@@ -83,5 +87,31 @@
     :body  (page/html5
             (resource head)
             (conj body (resource footer)))}))
+
+(defn render-template
+  "render an html from resources using headers, navbar, body and footer"
+  ([body] (render-template nil body))
+  ([account body]
+   {:headers {"Content-Type"
+              "text/html; charset=utf-8"}
+    :body (str "<!DOCTYPE html>\n<html>"
+               (resource head)
+               "\n<!-- body -->\n"
+               (resource body)
+               "\n<!-- end of body -->\n"
+               (resource footer))}))
+
+(defn render-html
+  "render an html from resources using headers, navbar, body and footer"
+  ([body] (render-template nil body))
+  ([account body]
+   {:headers {"Content-Type"
+              "text/html; charset=utf-8"}
+    :body (str "<!DOCTYPE html>\n<html>"
+               (resource head)
+               "\n<!-- body -->\n"
+               body ;; html text string
+               "\n<!-- end of body -->\n"
+               (resource footer))}))
 
 (defn render-error [err] (->> "is-danger" (notify err) render))

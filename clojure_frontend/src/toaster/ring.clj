@@ -33,11 +33,14 @@
    [ring.middleware.accept :refer [wrap-accept]]
    [ring.middleware.defaults :refer [wrap-defaults site-defaults]]))
 
+;; generic webapp stores
 (def config (atom {}))
 (def db     (atom {}))
 (def accts  (atom {}))
 (def auth   (atom {}))
-(def jobs   (atom {}))
+;; app specific stores
+(def jobs     (atom {}))
+(def profiles (atom {}))
 
 (defn init []
   (log/merge-config!
@@ -86,6 +89,8 @@
   ;; ----------------------
   ;; initialize jobs stores
   (reset! jobs (create-mongo-store @db :job-store))
+  ;; initialize profile stores
+  (reset! profiles (create-mongo-store @db :profile-store))
 
   ;; ------------------------------
   ;; log all results worth noticing
