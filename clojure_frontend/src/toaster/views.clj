@@ -152,6 +152,8 @@
     dockerfile (-> jobfound :dockerfile)]
    [:div {:class "box"}
     [:h1 {:class "title"} (str "Viewing job: " jobid)]
-    [:pre dockerfile]]
-   (f/when-failed [e]
-     (web/notify (str "Failure viewing job: " (f/message e)) "is-error"))))
+    [:form [:textarea {:id "code" :name "code" } dockerfile]]
+    [:script "var editor = CodeMirror.fromTextArea(document.getElementById(\"code\"),
+        { lineNumbers: true, mode: \"dockerfile\" });"]]
+     (f/when-failed [e]
+       (web/notify (str "Failure viewing job: " (f/message e)) "is-error"))))

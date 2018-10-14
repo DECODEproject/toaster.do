@@ -98,11 +98,6 @@
                             (views/dashboard acct)]))
              (auth-wrap request)))
 
-  ;; (GET "/list" request
-  ;;      (->> (fn [req conf acct]
-  ;;             (web/render acct (views/list-jobs acct)))
-  ;;           (auth-wrap request)))
-
   (POST "/remove" request
         (->> (fn [req conf acct]
                (web/render acct [:body

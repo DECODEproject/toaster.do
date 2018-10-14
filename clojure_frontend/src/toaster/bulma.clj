@@ -108,9 +108,18 @@
     [:title title]
     [:link {:href "https://fonts.googleapis.com/css?family=Open+Sans:300,400,700"
             :rel "stylesheet"}]
+
+    ;; non-invasive js for syntax highlight of text-area
+    (page/include-js  "/static/js/codemirror.js")
+    (page/include-js  "/static/js/codemirror-simple.js")
+    (page/include-js  "/static/js/codemirror-dockerfile.js")
+
     ;; cascade style sheets
     (page/include-css "/static/css/bulma.min.css")
     (page/include-css "/static/css/json-html.css")
+    (page/include-css "/static/css/codemirror.css")
+
+
     ;;    (page/include-css "/static/css/fa-regular.min.css")
     ;;    (page/include-css "/static/css/fontawesome.min.css")
 
