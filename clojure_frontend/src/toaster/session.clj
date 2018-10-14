@@ -71,6 +71,8 @@
        (= tclass "is-success") (log/info msg)
        (= tclass "is-primary") (log/debug msg))
    [:div {:class (str "notification " tclass " has-text-centered")} msg])))
+;; shortcut
+(defn error [msg fail] (notify (str msg " :: " (f/message fail)) "is-danger"))
 
 (defn render
   "render a full webpage using headers, navbar, body and footer"
@@ -82,4 +84,4 @@
             (resource head)
             (conj body (resource footer)))}))
 
-(defn render-error [err] (->> "is-danger" (notify (log/spy :error err)) render))
+(defn render-error [err] (->> "is-danger" (notify err) render))

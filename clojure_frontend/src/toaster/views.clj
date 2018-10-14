@@ -23,20 +23,17 @@
    [clojure.contrib.humanize :as humanize :refer [datetime]]
    ;;   [clojure.data.json :as json :refer [read-str]]
    [toaster.bulma :as web :refer [button render-yaml]]
-   [toaster.session :as s]
-   [toaster.ring :as ring]
-   [toaster.jobs :as job]
-   [failjure.core :as f]
+   [toaster.session :as s :refer [notify resource param]]
+   [toaster.ring :as ring :refer [jobs]]
+   [toaster.jobs :as job :refer [add sync_jobs]]
+   [failjure.core :as f :refer [attempt-all when-failed if-let-ok?]]
    [auxiliary.string :refer [strcasecmp]]
-   [toaster.config :as conf]
-   [taoensso.timbre :as log :refer [debug]]
-   [me.raynes.conch :as sh :refer [with-programs]]
-   [clj-time.core :as time]
+   [toaster.config :refer [q]]
+   [taoensso.timbre :as log]
+   ;; [clj-time.core :as time]
    [clj-time.coerce :as tc]
-   [clj-time.local :as tl]
    [clj-storage.core :as db]
-   [hiccup.form :as hf]
-   [clostache.parser :refer [render-resource]]))
+   [hiccup.form :as hf]))
 
 ;; TODO: templated
 (defn- box-list [account joblist]
@@ -64,45 +61,45 @@
          ))]]])
 
 (defn dockerfile-upload-post [request config account]
-  (let
-      [tempfile (get-in request [:params :file :tempfile])
-       filename (get-in request [:params :file :filename])
-       params (:params request)]
-    (cond
-      (> (get-in params [:file :size]) 64000)
-      ;; max upload size in bytes
-      ;; TODO: put in config
-      (f/fail "File too big in upload (64KB limit).")
-      :else
-      (let [file (io/copy tempfile (io/file "/tmp" filename))
-            path (str "/tmp/" filename)]
-        (io/delete-file tempfile)
-        (if (not (.exists (io/file path)))
-          (f/fail
-           (str "Uploaded file not found: " filename))
-          ;; file is now in 'tmp' var
-          (f/if-let-ok? [newjob (job/add path config account)]
-            [:div {:class "container"}
-             [:h1 {:class "title"} "Job uploaded and added"]
-             [:p "Log messages:"]
-             (web/render-yaml newjob)]
-            (s/notify (f/message newjob) "is-error")))))))
+  (f/attempt-all
+   [tempfile (s/param request [:file :tempfile])
+    filename (s/param request [:file :filename])
+    filesize (s/param request [:file :size])]
+   (cond
+     (> filesize 64000)
+     ;; TODO: put filesize limit in config
+     (s/notify "File too big in upload (64KB limit)" "is-danger")
+     :else
+     (let [file (io/copy tempfile (io/file "/tmp" filename))
+           path (str "/tmp/" filename)]
+       (io/delete-file tempfile)
+       (if (not (.exists (io/file path)))
+         (s/notify (str "Uploaded file not found: " filename) "is-danger")
+         ;; file is now in 'tmp' var
+         (f/if-let-ok? [newjob (job/add path config account)]
+           [:div {:class "container"}
+            [:h1 {:class "title"} "Job uploaded and added"]
+            [:p "Log messages:"]
+            (web/render-yaml newjob)]
+           ;; else when job/add is not-ok
+           (s/error "Error adding job" newjob)))))
+   (f/when-failed [e]
+     (s/error "Upload file error" e))))
 
 (defn dashboard
   ([account] (dashboard {} {} account))
   ([request config account]
-  (f/attempt-all
-   [joblist (db/query @ring/jobs {:email (:email account)})]
-   [:div {:class "container has-text-centered"}
+   (f/attempt-all
+    [joblist (db/query @ring/jobs {:email (:email account)})]
+    [:div {:class "container has-text-centered"}
 
-    [:span
-     ;(if (> 0 (count joblist))
-       (box-list account joblist)
-       ;)
-     (s/resource "templates/body_addjob.html") ]]
-   (f/when-failed [e]
-     (s/notify
-      (str "Job list failure: " (f/message e)) "is-error")))))
+     [:span
+                                        ;(if (> 0 (count joblist))
+      (box-list account joblist)
+                                        ;)
+      (s/resource "templates/body_addjob.html") ]]
+    (f/when-failed [e]
+      (s/error "Job list failure" e)))))
 
 (defn remove-job [request config account]
   (f/attempt-all
@@ -112,7 +109,7 @@
     r_sync (job/sync_jobs config "-d" jobid)]
    (s/notify (str "Job removed: "  jobid) "is-primary")
    (f/when-failed [e]
-     (s/notify (str "Failure removing job: " (f/message e)) "is-error"))))
+     (s/error "Failure removing job" e))))
 
 (defn start-job [request config account]
   (f/attempt-all
@@ -121,7 +118,7 @@
     r_sync (job/sync_jobs config "-r" jobid)]
    (s/notify (str "Job started: " jobid) "is-success")
    (f/when-failed [e]
-     (s/notify (str "Failure starting job: " (f/message e)) "is-error"))))
+     (s/error "Failure starting job" e))))
 
 (defn view-job [request config account]
   (f/attempt-all
@@ -133,5 +130,5 @@
     [:form [:textarea {:id "code" :name "code" } dockerfile]]
     [:script "var editor = CodeMirror.fromTextArea(document.getElementById(\"code\"),
         { lineNumbers: true, mode: \"dockerfile\" });"]]
-     (f/when-failed [e]
-       (s/notify (str "Failure viewing job: " (f/message e)) "is-error"))))
+   (f/when-failed [e]
+     (s/error "Failure viewing job" e))))
