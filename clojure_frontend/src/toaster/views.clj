@@ -71,19 +71,23 @@
            :enctype "multipart/form-data"}
     [:div {:class "file has-label is-fullwidth"}
      [:label {:class "file-label"}
-      [:input {:class "file-input" :name "file" :type "file"}]
+      [:input {:class "file-input inputfile inputfile-2" :id "file" :type "file"}]
+      [:label {:for "file"} [:span {:id "filename"} "Choose a Dockerfile..."]]
       [:span {:class "file-cta"}
        [:span {:class "file-icon"}
         [:i {:class "fa fa-upload"}]]
-       [:span {:class "file-label"}
-        "Docker file..."]]
-      [:span {:class "file-name"}]]]
+       [:span {:class "file-label"} "Upload"]]]]
     ;; [:fieldset {:class "fieldset-submit"}
     [:div {:class "field"}
      [:div {:class "control"}
       [:input {:class "button is-block is-info is-large is-fullwidth"
                :type "submit"
-               :name  "submit" :value "submit"}]]]]])
+               :name  "submit" :value "submit"}]]]]
+   [:script "var file = document.getElementById(\"file\");
+    file.onchange = function(){
+    if(file.files.length > 0) {
+      document.getElementById('filename').innerHTML = file.files[0].name;
+    } };"]])
 
 (defn dockerfile-upload-post [request config account]
   (let

@@ -106,7 +106,7 @@
       :content "width=device-width, initial-scale=1"}]
 
     [:title title]
-    [:link {:href "https://fonts.googleapis.com/css?family=Open+Sans:300,400,700"
+    [:link {:href "https://fonts.googleapis.com/css?family=Ubuntu:300,400,700"
             :rel "stylesheet"}]
 
     ;; non-invasive js for syntax highlight of text-area

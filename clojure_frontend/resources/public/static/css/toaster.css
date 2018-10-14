@@ -1,8 +1,4 @@
 body {
-	/* font-family: "arial"; */
-	/* font-size: 22px; */
-	font-smooth: always;
-	-webkit-font-smoothing: antialiased;
 	/* padding-top: 65px; */
 }
 
@@ -36,24 +32,13 @@ code {
 
 h1, h2, h3, h4 { }
 
-/* p { */
-/* 	letter-spacing: 0.01rem; */
-/* 	font-style: normal; */
-/* 	line-height: 1.5; */
-/* } */
-
-/* img { */
-/* 	width: auto; */
-/* 	height: auto; */
-/* 	max-width: 100%; */
-/* 	vertical-align: middle; */
-/* 	overflow: hidden; */
-/* } */
-
 html,body {
-	font-family: 'Open Sans', serif;
+	font-family: 'Ubuntu', sans-serif;
 	font-size: 14px;
 	font-weight: 300;
+	font-smooth: always;
+	-webkit-font-smoothing: antialiased;
+
 }
 .hero.is-success {
 	background: #F2F6FA;
@@ -84,4 +69,65 @@ p {
 }
 p.subtitle {
 	padding-top: 1rem;
+}
+
+/* inputfile js for bulma from https://jsfiddle.net/chintanbanugaria/uzva5byy/ */
+
+.inputfile {
+		width: 0.1px;
+		height: 0.1px;
+		opacity: 0;
+		overflow: hidden;
+		
+		z-index: -1;
+    margin-top:10px;
+}
+.inputfile + label {
+	 
+		/* 20px */
+		width: 50%;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		cursor: pointer;
+		display: inline-block;
+		overflow: hidden;
+		padding-left: 0.75em;
+		padding-right: 0.75em;
+		border: 1px solid #dbdbdb;
+		height: 2.285em;
+		box-shadow: inset 0 1px 2px rgba(10, 10, 10, 0.1);
+		line-height: 1.5rem;
+		border-radius: 3px;
+		padding-top: 0.3em;
+    
+		/* 10px 20px */
+}
+.no-js .inputfile + label {
+		display: none;
+}
+.inputfile:focus + label,
+.inputfile.has-focus + label {
+		border-color: #00d1b2;
+}
+.inputfile + label * {
+		/* pointer-events: none; */
+		/* in case of FastClick lib use */
+}
+.inputfile + label svg {
+		width: 1em;
+		height: 1em;
+		line-height: 1.5rem;
+		vertical-align: middle;
+		margin-top: -0.25em;
+		/* 4px */
+		margin-right: 0.25em;
+		/* 4px */		 
+}
+.inputfile-2 + label {
+		border: 1px solid #dbdbdb;
+}
+.inputfile-2:focus + label,
+.inputfile-2.has-focus + label,
+.inputfile-2 + label:hover {
+		border-color: #00d1b2;
 }
