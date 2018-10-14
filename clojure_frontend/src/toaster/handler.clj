@@ -76,43 +76,43 @@
           ;; else
           (s/render [:body (s/resource s/login)]))
         (f/when-failed[e]
-          (s/render [:body (s/notify (f/message e) "is-error")]))))
+          (s/render [:body (s/error "backend missing" e)]))))
 
   ;; NEW ROUTES HERE
   (POST "/dockerfile" request
         (->> (fn [req conf acct]
                (s/render acct
                          [:body
-                          (views/dockerfile-upload req conf acct)
+                          (s/upload req conf acct views/add-job)
                           (views/dashboard acct)]))
              (auth-wrap request)))
 
   (POST "/remove" request
         (->> (fn [req conf acct]
                (s/render acct [:body
-                                 (views/remove-job req conf acct)
-                                 (views/dashboard acct)]))
+                               (views/remove-job req conf acct)
+                               (views/dashboard acct)]))
              (auth-wrap request)))
 
   (POST "/start" request
         (->> (fn [req conf acct]
                (s/render acct [:body
-                                 (views/start-job req conf acct)
-                                 (views/dashboard acct)]))
+                               (views/start-job req conf acct)
+                               (views/dashboard acct)]))
              (auth-wrap request)))
 
   (POST "/view" request
         (->> (fn [req conf acct]
                (s/render acct [:body
-                                 (views/view-job req conf acct)
-                                 (views/dashboard acct)]))
+                               (views/view-job req conf acct)
+                               (views/dashboard acct)]))
              (auth-wrap request)))
 
   (GET "/error" request
        (->> (fn [req conf acct]
               (s/render acct [:body
-                                (s/notify "Generic Error Page" "is-error")
-                                (views/dashboard acct)]))
+                              (s/notify "Generic Error Page" "is-error")
+                              (views/dashboard acct)]))
             (auth-wrap request)))
 
   ;; JUST-AUTH ROUTES
@@ -129,54 +129,25 @@
                                   :auth   logged}}]
            (conj session
                  (s/render logged [:body (views/dashboard logged)])))
-         ;; (s/render
-         ;;  logged
-         ;;  [:div
-         ;;   [:h1 "Logged in: " username]
-         ;;   views/welcome-menu])))
          (f/when-failed [e]
-           (s/render [:body (s/notify
-                               (str "Login failed: " (f/message e)) "is-error")]))))
+           (s/render
+            [:body
+             (s/error "Login failed" e)]))))
 
   (GET "/logout" request
        (conj {:session {:config config}}
              (s/render [:body
-                          [:h1 {:class "title"} "Logged out."]])))
+                        [:h1 {:class "title"} "Logged out."]])))
 
   (GET "/signup" request (s/render-template s/signup))
   (POST "/signup" request
-        (f/attempt-all
-         [name (s/param request :name)
-          email (s/param request :email)
-          password (s/param request :password)
-          repeat-password (s/param request :repeat-password)
-          activation {:activation-uri
-                      (get-in request [:headers "host"])}]
-         (s/render
-          (if (= password repeat-password)
-            (f/try*
-             (f/if-let-ok?
-                 [signup (auth/sign-up @ring/auth
-                                       name
-                                       email
-                                       password
-                                       activation
-                                       [])]
-               [:body
-                [:h2 (str "Account created: "
-                          name " &lt;" email "&gt;")]
-                [:h3 "Account pending activation."]]
-               [:body
-                (s/notify
-                 (str "Failure creating account: "
-                      (f/message signup)) "is-error")
-                (s/resource s/signup)]))
-            [:body (s/notify
-                    "Repeat password didnt match" "is-error")]))
-         (f/when-failed [e]
-           (s/render
-            [:body (s/notify
-                    (str "Sign-up failure: " (f/message e)) "is-error")]))))
+        (s/adduser request
+                   (fn [name email]
+                     (s/render
+                      [:body
+                       (s/notify (str "Account created: "
+                                      name " &lt;" email "&gt;") "is-success")
+                       [:h1 {:class "title"} "Check email for activation."]]))))
 
   (GET "/activate/:email/:activation-id"
        [email activation-id :as request]
@@ -184,28 +155,26 @@
              (str "http://"
                   (get-in request [:headers "host"])
                   "/activate/" email "/" activation-id)]
-         (s/render
-          [:body
-           (f/if-let-failed?
-               [act (auth/activate-account
-                     @ring/auth email
-                     {:activation-link activation-uri})]
-             (s/notify
-              [:span
-               [:h1 {:class "title"}    "Failure activating account"]
-               [:h2 {:class "subtitle"} (f/message act)]
-               [:p (str "Email: " email " activation-id: " activation-id)]] "is-error")
-             [:span
-              (s/notify (str "Account activated: " email) "is-success")
-              (profile/create email)]
-             )])))
+         (f/attempt-all
+          [act (auth/activate-account
+                @ring/auth email
+                {:activation-link activation-uri})]
+          (s/render
+           [:body
+            (s/notify "Account succesfully activated" "is-success")
+            (views/dashboard)])
+          (f/when-failed [e]
+            (s/render
+             [:body
+              (s/error "Failure activating account" e)])))))
+
   ;; -- end of JUST-AUTH
 
   (POST "/" request
         ;; generic endpoint for canceled operations
         (s/render (s/check-account request)
-                    (s/notify
-                     (s/param request :message) "is-error")))
+                  (s/notify
+                   (s/param request :message) "is-error")))
 
   (route/resources "/")
   (route/not-found (s/render [:body (s/notify "Page Not Found" "is-error")]))

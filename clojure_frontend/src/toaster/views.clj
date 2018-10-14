@@ -18,8 +18,7 @@
 
 (ns toaster.views
   (:require
-   [clojure.java.io :as io]
-   [clojure.string :as str]
+   [clojure.string :as str :refer [replace]]
    [clojure.contrib.humanize :as humanize :refer [datetime]]
    ;;   [clojure.data.json :as json :refer [read-str]]
    [toaster.bulma :as web :refer [button render-yaml]]
@@ -60,33 +59,13 @@
             (web/button "/remove" "\uD83D\uDDD1" (hf/hidden-field "jobid" jobid))]]]
          ))]]])
 
-(defn dockerfile-upload [request config account]
+(defn add-job [path config account]
   (f/attempt-all
-   [tempfile (s/param request [:file :tempfile])
-    filename (s/param request [:file :filename])
-    params (log/spy (:params request))]
-   (if (> (s/param request [:file :size]) 64000)
-     ;; TODO: put filesize limit in config
-     (s/error "File too big in upload (64KB limit)")
-     ;; else
-     (let [file (io/copy tempfile (io/file "/tmp" filename))
-           path (str "/tmp/" filename)]
-       (io/delete-file tempfile)
-       (if (not (.exists (io/file path)))
-         (s/error (str "Uploaded file not found: " filename))
-         ;; file is now in 'tmp' var
-         (f/attempt-all
-          [newjob (job/add path config account)]
-          [:div {:class "container"}
-           [:h1 {:class "title"} "Job uploaded and added"]
-           [:p "Log messages:"]
-           (web/render-yaml newjob)]
-          ;; else when job/add is not-ok
-          (f/when-failed [e]
-            (s/error "Error adding job" e))
-          ))))
+   [newjob (job/add path config account)]
+   (s/notify "New toaster job succesfully added" "is-success")
+   ;; else when job/add is not-ok
    (f/when-failed [e]
-     (s/error "Upload file error" e))))
+     (s/error "Error adding job" e))))
 
 (defn dashboard
   ([account] (dashboard {} {} account))

@@ -1,6 +1,7 @@
 (ns toaster.session
   (:refer-clojure :exclude [get])
   (:require
+   [clojure.java.io :as io]
    [toaster.config :as conf]
    [taoensso.timbre :as log]
    [failjure.core :as f]
@@ -115,3 +116,58 @@
                (resource footer))}))
 
 (defn render-error [err] (->> "is-danger" (notify err) render))
+
+(defn fail [msg err] (f/fail (str msg " :: " (f/message err))))
+
+(defn upload
+  "manages the upload of a file and calls a function with its path.
+  (callback) is called with 3 args: path, config and account"
+  [request config account callback]
+  (f/attempt-all
+   [tempfile (param request [:file :tempfile])
+    filename (param request [:file :filename])
+    filesize (param request [:file :size])]
+   (if (> filesize 64000)
+     ;; TODO: put filesize limit in config
+     (f/fail "file too big to upload (64KB limit)")
+     ;; else
+     (let [file (io/copy tempfile (io/file "/tmp" filename))
+           path (str "/tmp/" filename)]
+       (io/delete-file tempfile)
+       (if (not (.exists (io/file path)))
+         (f/fail (str "uploaded file not found: " filename))
+         ;; file is now in 'tmp' var
+         (callback path config account))))
+   (f/when-failed [e]
+     (error "Upload file error" e))))
+
+(defn adduser
+  "manages the creation of a user (pending activation) and calls a fun callback.
+  (fun) takes 2 args: the name and email of the user."
+  [request fun]
+  (f/attempt-all
+   [name (param request :name)
+    email (param request :email)
+    password (param request :password)
+    repeat-password (param request :repeat-password)
+    activation {:activation-uri
+                (get-in request [:headers "host"])}]
+
+   (if (not= password repeat-password)
+     (f/fail "repeated password did not match")
+     (f/try*
+      (f/attempt-all
+       [signup (auth/sign-up @ring/auth
+                             name
+                             email
+                             password
+                             activation
+                             [])]
+       (fun name email)
+       (f/when-failed [e]
+         (fail (str "failure creating account '"email"'") e)))))
+   (f/when-failed [e]
+     (render
+      [:body
+       (error "Sign-up failure" e)
+       (resource signup)]))))
