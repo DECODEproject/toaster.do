@@ -25,7 +25,7 @@
                  [me.raynes/fs "1.4.6"]
                  [me.raynes/conch "0.8.0"]
                  ;; time from joda-time
-                 [clj-time "0.14.4"]
+                 [clj-time "0.15.0"]
                  [clojure-humanize "0.2.2"]
                  [de.ubercode.clostache/clostache "1.4.0"]]
   :aliases {"test" "midje"}
@@ -45,7 +45,7 @@
                        [codemirror "5.40.2"]]}
   :profiles { :dev {:dependencies [[javax.servlet/servlet-api "2.5"]
                                    [ring/ring-mock "0.3.2"]
-                                   [midje "1.9.2"]]
+                                   [midje "1.9.4"]]
                     :plugins [[lein-midje "3.1.3"]
                               [lein-npm "0.6.2"]]
                     :aot :all
